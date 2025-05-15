@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from "react";
+import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
+import React, { useState } from "react";
 import {
-  StyleSheet,
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
   Button,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 
 import NavBar from "../components/NavBar";
 import { Colors } from "../constants/Colors";
 
 export default function App() {
-  const [facing, setFacing] = useState<CameraType>("back");
+  const [facing, setFacing] = useState<CameraType>("front");
   const [permission, requestPermission] = useCameraPermissions();
   const [image, setImage] = useState<string | null>(null);
 
@@ -49,6 +49,17 @@ export default function App() {
           />
         )}
       </View>
+      <TouchableOpacity
+        style={styles.revertBtn}
+        onPress={() => toggleCameraFacing()}
+      >
+        <Image
+          resizeMode="contain"
+          style={{ width: "80%", height: "80%" }}
+          alt=""
+          source={require("../assets/icons/revert.png")}
+        />
+      </TouchableOpacity>
       <NavBar setImage={setImage} />
     </View>
   );
@@ -80,5 +91,15 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     height: "100%",
+  },
+
+  revertBtn: {
+    width: 30,
+    height: 30,
+    position: "absolute",
+    marginTop: 50,
+    right: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
