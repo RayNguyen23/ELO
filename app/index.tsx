@@ -1,32 +1,45 @@
 import React, { useState, useEffect } from "react";
-import { StyleSheet, View, Text, Image, TouchableOpacity } from "react-native";
-import { Camera } from "expo-camera";
+import {
+  StyleSheet,
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  Button,
+} from "react-native";
+import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
 
 import NavBar from "../components/NavBar";
 import { Colors } from "../constants/Colors";
 
 export default function App() {
-  const [hasPermission, setHasPermission] = useState(null);
+  const [facing, setFacing] = useState<CameraType>("front");
+  const [permission, requestPermission] = useCameraPermissions();
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === 'granted');
-    })();
-  }, []);
-
-  if (hasPermission === null) {
+  if (!permission) {
+    // Camera permissions are still loading.
     return <View />;
   }
-  if (hasPermission === false) {
-    return <Text>No access to camera</Text>;
+
+  if (!permission.granted) {
+    // Camera permissions are not granted yet.
+    return (
+      <View style={styles.container}>
+        <Text>We need your permission to show the camera</Text>
+        <Button onPress={requestPermission} title="grant permission" />
+      </View>
+    );
+  }
+
+  function toggleCameraFacing() {
+    setFacing((current) => (current === "back" ? "front" : "back"));
   }
 
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>E L O</Text>
       <View style={styles.CameraContainer}>
-        <Camera style={styles.camera} type={Camera.Constants.Type.back} />
+        <CameraView style={styles.camera} facing={facing}></CameraView>
       </View>
       <NavBar />
     </View>
