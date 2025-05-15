@@ -1,7 +1,8 @@
-import React from "react";
-import { StyleSheet, View, Image, TouchableOpacity } from "react-native";
 import { Colors } from "@/constants/Colors";
 import * as ImagePicker from "expo-image-picker";
+import React from "react";
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { removeBackground } from "../constants/RemoveBg";
 
 interface NavBarProps {
   setImage: (uri: string) => void;
@@ -9,18 +10,22 @@ interface NavBarProps {
 
 export default function NavBar({ setImage }: NavBarProps) {
   const pickImage = async () => {
-    // No permissions request is necessary for launching the image library
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images", "videos"],
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
-    console.log(result);
-
-    if (!result.canceled) {
-      setImage(result.assets[0].uri);
+    if (!result.canceled && result.assets.length > 0) {
+      try {
+        const uri = result.assets[0].uri;
+        const noBgImage = await removeBackground(uri);
+        setImage(noBgImage); // base64 image with transparent bg
+      } catch (error) {
+        console.error("Failed to remove background:", error);
+        Alert.alert("Error", "Failed to remove background from image.");
+      }
     }
   };
 

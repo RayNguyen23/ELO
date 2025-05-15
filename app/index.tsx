@@ -36,6 +36,8 @@ export default function App() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
 
+  function takePicture() {}
+
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>E L O</Text>
@@ -45,7 +47,7 @@ export default function App() {
           <Image
             resizeMode="center"
             source={{ uri: image }}
-            style={{ position: "absolute", width: "80%" }}
+            style={{ position: "absolute", width: "80%", height: "80%" }}
           />
         )}
       </View>
