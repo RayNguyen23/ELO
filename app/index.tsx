@@ -13,8 +13,9 @@ import NavBar from "../components/NavBar";
 import { Colors } from "../constants/Colors";
 
 export default function App() {
-  const [facing, setFacing] = useState<CameraType>("front");
+  const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
+  const [image, setImage] = useState<string | null>(null);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -40,8 +41,15 @@ export default function App() {
       <Text style={styles.logo}>E L O</Text>
       <View style={styles.CameraContainer}>
         <CameraView style={styles.camera} facing={facing}></CameraView>
+        {image && (
+          <Image
+            resizeMode="center"
+            source={{ uri: image }}
+            style={{ position: "absolute", width: "80%" }}
+          />
+        )}
       </View>
-      <NavBar />
+      <NavBar setImage={setImage} />
     </View>
   );
 }
