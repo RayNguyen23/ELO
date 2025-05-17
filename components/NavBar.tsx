@@ -3,6 +3,7 @@ import * as ImagePicker from "expo-image-picker";
 import React from "react";
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { removeBackground } from "../constants/RemoveBg";
+import { supabase } from "../supabaseClient";
 
 interface NavBarProps {
   setImage: (uri: string) => void;
@@ -18,14 +19,22 @@ export default function NavBar({ setImage }: NavBarProps) {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      try {
-        const uri = result.assets[0].uri;
-        const noBgImage = await removeBackground(uri);
-        setImage(noBgImage); // base64 image with transparent bg
-      } catch (error) {
-        console.error("Failed to remove background:", error);
-        Alert.alert("Error", "Failed to remove background from image.");
-      }
+      const uri = result.assets[0].uri;
+
+      const { data, error } = await supabase.storage
+        .from("dulieu")
+        .upload("DATA/image1.png", uri, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+      // try {
+      //   const uri = result.assets[0].uri;
+      //   const noBgImage = await removeBackground(uri);
+      //   setImage(noBgImage); // base64 image with transparent bg
+      // } catch (error) {
+      //   console.error("Failed to remove background:", error);
+      //   Alert.alert("Error", "Failed to remove background from image.");
+      // }
     }
   };
 
