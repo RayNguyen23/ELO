@@ -10,11 +10,6 @@ interface NavBarProps {
   setImage: (uri: string) => void;
 }
 
-// Supabase config
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
-const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
-const BUCKET_NAME = "files";
-
 export default function NavBar({ setImage }: NavBarProps) {
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
