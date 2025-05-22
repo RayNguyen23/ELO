@@ -1,16 +1,19 @@
 import { Colors } from "@/constants/Colors";
 import * as ImagePicker from "expo-image-picker";
-import React from "react";
+import React, { useState } from "react";
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { removeBackground } from "../constants/RemoveBg";
 import { decode as atob } from "base-64";
 import { supabase } from "@/config/initSupabase";
+import { uploadBase64Image } from "@/utils/uploadBase64Image";
 
 interface NavBarProps {
   setImage: (uri: string) => void;
+  takePicture: () => void;
 }
 
-export default function NavBar({ setImage }: NavBarProps) {
+export default function NavBar({ setImage, takePicture }: NavBarProps) {
+  const [isUploaded, setIsUploaded] = useState<boolean>(false);
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -24,7 +27,8 @@ export default function NavBar({ setImage }: NavBarProps) {
         const uri = result.assets[0].uri;
         const noBgImage = await removeBackground(uri); // returns base64
         const uploadedUrl = await uploadBase64Image(noBgImage);
-        setImage(uploadedUrl); // now a Supabase public URL
+        // setImage(uploadedUrl); // now a Supabase public URL
+        setIsUploaded(true);
       } catch (error) {
         console.error("Failed to process and upload image:", error);
         Alert.alert("Error", "Failed to process and upload image.");
@@ -32,63 +36,68 @@ export default function NavBar({ setImage }: NavBarProps) {
     }
   };
 
-  const uploadBase64Image = async (base64: string) => {
-    try {
-      const cleanedBase64 = base64.replace(/^data:image\/\w+;base64,/, "");
-      const buffer = Uint8Array.from(atob(cleanedBase64), (c) =>
-        c.charCodeAt(0)
-      );
-
-      const fileName = `images/${Date.now()}.png`;
-
-      const { data, error } = await supabase.storage
-        .from("files")
-        .upload(fileName, buffer, {
-          contentType: "image/png",
-          upsert: true,
-        });
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage
-        .from("files")
-        .getPublicUrl(fileName);
-
-      const publicURL = urlData.publicUrl; // here is the fix
-      console.log(publicURL);
-
-      return publicURL;
-    } catch (error) {
-      console.error("Upload error:", error);
-      throw error;
-    }
-  };
   return (
-    <View style={styles.bottomNav}>
-      <TouchableOpacity style={styles.navBtn}>
-        <Image
-          style={styles.navImage}
-          alt=""
-          source={require("../assets/icons/stores.png")}
-        />
-      </TouchableOpacity>
+    <>
+      {isUploaded === false ? (
+        <View style={styles.bottomNav}>
+          <TouchableOpacity style={styles.navBtn}>
+            <Image
+              style={styles.navImage}
+              alt=""
+              source={require("../assets/icons/stores.png")}
+            />
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.navBtn} onPress={pickImage}>
-        <Image
-          style={styles.navImage}
-          alt=""
-          source={require("../assets/icons/upload.png")}
-        />
-      </TouchableOpacity>
+          <TouchableOpacity style={styles.navBtn} onPress={pickImage}>
+            <Image
+              style={styles.navImage}
+              alt=""
+              source={require("../assets/icons/upload.png")}
+            />
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.navBtn}>
-        <Image
-          style={styles.navImage}
-          alt=""
-          source={require("../assets/icons/settings.png")}
-        />
-      </TouchableOpacity>
-    </View>
+          <TouchableOpacity style={styles.navBtn}>
+            <Image
+              style={styles.navImage}
+              alt=""
+              source={require("../assets/icons/settings.png")}
+            />
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View
+          style={{
+            position: "absolute",
+            flexDirection: "row",
+            bottom: 30,
+            width: 110,
+            height: 50,
+            justifyContent: "center",
+            alignItems: "center",
+            borderRadius: 50,
+            overflow: "hidden",
+            backgroundColor: Colors.BlurGray,
+          }}
+        >
+          <TouchableOpacity
+            onPress={() => takePicture()}
+            style={{
+              width: "100%",
+              height: "100%",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Image
+              alt=""
+              style={{ width: "60%", height: "60%" }}
+              resizeMode="contain"
+              source={require("../assets/icons/camera.png")}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+    </>
   );
 }
 

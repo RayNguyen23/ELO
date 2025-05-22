@@ -1,6 +1,7 @@
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
+  Alert,
   Button,
   Image,
   StyleSheet,
@@ -8,6 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { supabase } from "@/config/initSupabase";
+import { uploadBase64Image } from "@/utils/uploadBase64Image";
 
 import NavBar from "../../components/NavBar";
 import { Colors } from "../../constants/Colors";
@@ -16,6 +19,7 @@ export default function Home() {
   const [facing, setFacing] = useState<CameraType>("front");
   const [permission, requestPermission] = useCameraPermissions();
   const [image, setImage] = useState<string | null>(null);
+  const cameraRef = useRef<CameraView>(null);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -36,13 +40,37 @@ export default function Home() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
 
-  function takePicture() {}
+  const takePicture = async () => {
+    if (!cameraRef.current) return;
+
+    try {
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 1,
+        base64: true,
+        skipProcessing: true,
+      });
+
+      if (!photo?.base64) throw new Error("No base64 data in photo");
+
+      const base64 = `data:image/jpeg;base64,${photo.base64}`;
+      const uploadedUrl = await uploadBase64Image(base64);
+
+      setImage(uploadedUrl);
+    } catch (error) {
+      console.error("Failed to take and upload photo:", error);
+      Alert.alert("Error", "Failed to take and upload photo.");
+    }
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>E L O</Text>
       <View style={styles.CameraContainer}>
-        <CameraView style={styles.camera} facing={facing}></CameraView>
+        <CameraView
+          ref={cameraRef}
+          style={styles.camera}
+          facing={facing}
+        ></CameraView>
         {image && (
           <Image
             resizeMode="center"
@@ -62,7 +90,7 @@ export default function Home() {
           source={require("../../assets/icons/revert.png")}
         />
       </TouchableOpacity>
-      <NavBar setImage={setImage} />
+      <NavBar setImage={setImage} takePicture={takePicture} />
     </View>
   );
 }
