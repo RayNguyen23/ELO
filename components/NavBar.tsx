@@ -8,11 +8,11 @@ import { supabase } from "@/config/initSupabase";
 import { uploadBase64Image } from "@/utils/uploadBase64Image";
 
 interface NavBarProps {
-  setImage: (uri: string) => void;
+  setGarment_image: (e: string) => void;
   takePicture: () => void;
 }
 
-export default function NavBar({ setImage, takePicture }: NavBarProps) {
+export default function NavBar({ takePicture, setGarment_image }: NavBarProps) {
   const [isUploaded, setIsUploaded] = useState<boolean>(false);
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -28,6 +28,7 @@ export default function NavBar({ setImage, takePicture }: NavBarProps) {
         const noBgImage = await removeBackground(uri); // returns base64
         const uploadedUrl = await uploadBase64Image(noBgImage);
         // setImage(uploadedUrl); // now a Supabase public URL
+        setGarment_image(uploadedUrl);
         setIsUploaded(true);
       } catch (error) {
         console.error("Failed to process and upload image:", error);

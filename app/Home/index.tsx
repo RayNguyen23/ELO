@@ -9,17 +9,23 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { supabase } from "@/config/initSupabase";
 import { uploadBase64Image } from "@/utils/uploadBase64Image";
+import axios from "axios";
 
 import NavBar from "../../components/NavBar";
 import { Colors } from "../../constants/Colors";
+
+import DisplayResults from "@/components/DisplayResults";
 
 export default function Home() {
   const [facing, setFacing] = useState<CameraType>("front");
   const [permission, requestPermission] = useCameraPermissions();
   const [image, setImage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
+  const [isShowing, setIsShowing] = useState<boolean>(false);
+  const [model_Image, setModel_Image] = useState<string>("");
+  const [garment_image, setGarment_image] = useState<string>("");
+  const [ImageKey, setImageKey] = useState<string>("");
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -39,6 +45,8 @@ export default function Home() {
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
+  const delay = (ms: number | undefined) =>
+    new Promise((res) => setTimeout(res, ms));
 
   const takePicture = async () => {
     if (!cameraRef.current) return;
@@ -55,7 +63,31 @@ export default function Home() {
       const base64 = `data:image/jpeg;base64,${photo.base64}`;
       const uploadedUrl = await uploadBase64Image(base64);
 
-      setImage(uploadedUrl);
+      setModel_Image(uploadedUrl);
+      try {
+        console.log(uploadedUrl, garment_image);
+        const response = await axios.post(
+          "https://api.fashn.ai/v1/run",
+          {
+            model_image: uploadedUrl,
+            garment_image: garment_image,
+            category: "tops",
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.EXPO_PUBLIC_FASHN_KEY}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("✅ API response:", response.data.id);
+        setImageKey(response.data.id);
+        await delay(30000);
+        setIsShowing(true);
+      } catch (error) {
+        console.error("❌ Error calling Fashn API:");
+      }
     } catch (error) {
       console.error("Failed to take and upload photo:", error);
       Alert.alert("Error", "Failed to take and upload photo.");
@@ -63,35 +95,37 @@ export default function Home() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.logo}>E L O</Text>
-      <View style={styles.CameraContainer}>
-        <CameraView
-          ref={cameraRef}
-          style={styles.camera}
-          facing={facing}
-        ></CameraView>
-        {image && (
-          <Image
-            resizeMode="center"
-            source={{ uri: image }}
-            style={{ position: "absolute", width: "80%", height: "80%" }}
+    <>
+      {isShowing ? (
+        <DisplayResults setIsShowing={setIsShowing} ImageKey={ImageKey} />
+      ) : (
+        <View style={styles.container}>
+          <Text style={styles.logo}>E L O</Text>
+          <View style={styles.CameraContainer}>
+            <CameraView
+              ref={cameraRef}
+              style={styles.camera}
+              facing={facing}
+            ></CameraView>
+          </View>
+          <TouchableOpacity
+            style={styles.revertBtn}
+            onPress={() => toggleCameraFacing()}
+          >
+            <Image
+              resizeMode="contain"
+              style={{ width: "80%", height: "80%" }}
+              alt=""
+              source={require("../../assets/icons/revert.png")}
+            />
+          </TouchableOpacity>
+          <NavBar
+            takePicture={takePicture}
+            setGarment_image={setGarment_image}
           />
-        )}
-      </View>
-      <TouchableOpacity
-        style={styles.revertBtn}
-        onPress={() => toggleCameraFacing()}
-      >
-        <Image
-          resizeMode="contain"
-          style={{ width: "80%", height: "80%" }}
-          alt=""
-          source={require("../../assets/icons/revert.png")}
-        />
-      </TouchableOpacity>
-      <NavBar setImage={setImage} takePicture={takePicture} />
-    </View>
+        </View>
+      )}
+    </>
   );
 }
 
@@ -132,4 +166,29 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
+  bottomNav: {
+    position: "absolute",
+    flexDirection: "row",
+    bottom: 30,
+
+    width: "90%",
+    height: 50,
+
+    borderRadius: 20,
+
+    alignItems: "center",
+    justifyContent: "space-around",
+
+    backgroundColor: Colors.BlurGray,
+  },
+
+  navBtn: {
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  navImage: { width: "80%", height: "80%" },
 });
