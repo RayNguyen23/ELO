@@ -1,68 +1,76 @@
-import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
-import React, { useState } from "react";
 import {
+  Alert,
+  View,
   Button,
-  Image,
+  TextInput,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
 } from "react-native";
+import { useState } from "react";
+import React from "react";
+import Spinner from "react-native-loading-spinner-overlay";
+import { supabase } from "../config/initSupabase";
 
-import NavBar from "../components/NavBar";
-import { Colors } from "../constants/Colors";
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-export default function App() {
-  const [facing, setFacing] = useState<CameraType>("front");
-  const [permission, requestPermission] = useCameraPermissions();
-  const [image, setImage] = useState<string | null>(null);
+  // Sign in with email and password
+  const onSignInPress = async () => {
+    setLoading(true);
 
-  if (!permission) {
-    // Camera permissions are still loading.
-    return <View />;
-  }
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (!permission.granted) {
-    // Camera permissions are not granted yet.
-    return (
-      <View style={styles.container}>
-        <Text>We need your permission to show the camera</Text>
-        <Button onPress={requestPermission} title="grant permission" />
-      </View>
-    );
-  }
+    if (error) Alert.alert(error.message);
+    setLoading(false);
+  };
 
-  function toggleCameraFacing() {
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  }
+  // Create a new user
+  const onSignUpPress = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
 
-  function takePicture() {}
+    if (error) Alert.alert(error.message);
+    setLoading(false);
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>E L O</Text>
-      <View style={styles.CameraContainer}>
-        <CameraView style={styles.camera} facing={facing}></CameraView>
-        {image && (
-          <Image
-            resizeMode="center"
-            source={{ uri: image }}
-            style={{ position: "absolute", width: "80%", height: "80%" }}
-          />
-        )}
-      </View>
-      <TouchableOpacity
-        style={styles.revertBtn}
-        onPress={() => toggleCameraFacing()}
-      >
-        <Image
-          resizeMode="contain"
-          style={{ width: "80%", height: "80%" }}
-          alt=""
-          source={require("../assets/icons/revert.png")}
-        />
+      <Spinner visible={loading} />
+
+      <Text style={styles.header}>My Cloud</Text>
+
+      <TextInput
+        autoCapitalize="none"
+        placeholder="john@doe.com"
+        value={email}
+        onChangeText={setEmail}
+        style={styles.inputField}
+      />
+      <TextInput
+        placeholder="password"
+        value={password}
+        onChangeText={setPassword}
+        secureTextEntry
+        style={styles.inputField}
+      />
+
+      <TouchableOpacity onPress={onSignInPress} style={styles.button}>
+        <Text style={{ color: "#fff" }}>Sign in</Text>
       </TouchableOpacity>
-      <NavBar setImage={setImage} />
+      <Button
+        onPress={onSignUpPress}
+        title="Create Account"
+        color={"#fff"}
+      ></Button>
     </View>
   );
 }
@@ -70,38 +78,31 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.Background,
+    paddingTop: 200,
+    padding: 20,
+    backgroundColor: "#151515",
+  },
+  header: {
+    fontSize: 30,
+    textAlign: "center",
+    margin: 50,
+    color: "#fff",
+  },
+  inputField: {
+    marginVertical: 4,
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#2b825b",
+    borderRadius: 4,
+    padding: 10,
+    color: "#fff",
+    backgroundColor: "#363636",
+  },
+  button: {
+    marginVertical: 15,
     alignItems: "center",
-  },
-
-  logo: {
-    position: "absolute",
-    color: Colors.White,
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 50,
-    zIndex: 1,
-  },
-
-  CameraContainer: {
-    width: "100%",
-    height: "100%",
-    position: "relative",
-  },
-
-  camera: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-
-  revertBtn: {
-    width: 30,
-    height: 30,
-    position: "absolute",
-    marginTop: 50,
-    right: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: "#2b825b",
+    padding: 12,
+    borderRadius: 4,
   },
 });

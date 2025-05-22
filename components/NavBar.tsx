@@ -3,11 +3,17 @@ import * as ImagePicker from "expo-image-picker";
 import React from "react";
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { removeBackground } from "../constants/RemoveBg";
-import { supabase } from "../supabaseClient";
+import { decode as atob } from "base-64";
+import { supabase } from "@/config/initSupabase";
 
 interface NavBarProps {
   setImage: (uri: string) => void;
 }
+
+// Supabase config
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
+const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
+const BUCKET_NAME = "files";
 
 export default function NavBar({ setImage }: NavBarProps) {
   const pickImage = async () => {
@@ -19,25 +25,49 @@ export default function NavBar({ setImage }: NavBarProps) {
     });
 
     if (!result.canceled && result.assets.length > 0) {
-      const uri = result.assets[0].uri;
-
-      const { data, error } = await supabase.storage
-        .from("dulieu")
-        .upload("DATA/image1.png", uri, {
-          cacheControl: "3600",
-          upsert: false,
-        });
-      // try {
-      //   const uri = result.assets[0].uri;
-      //   const noBgImage = await removeBackground(uri);
-      //   setImage(noBgImage); // base64 image with transparent bg
-      // } catch (error) {
-      //   console.error("Failed to remove background:", error);
-      //   Alert.alert("Error", "Failed to remove background from image.");
-      // }
+      try {
+        const uri = result.assets[0].uri;
+        const noBgImage = await removeBackground(uri); // returns base64
+        const uploadedUrl = await uploadBase64Image(noBgImage);
+        setImage(uploadedUrl); // now a Supabase public URL
+      } catch (error) {
+        console.error("Failed to process and upload image:", error);
+        Alert.alert("Error", "Failed to process and upload image.");
+      }
     }
   };
 
+  const uploadBase64Image = async (base64: string) => {
+    try {
+      const cleanedBase64 = base64.replace(/^data:image\/\w+;base64,/, "");
+      const buffer = Uint8Array.from(atob(cleanedBase64), (c) =>
+        c.charCodeAt(0)
+      );
+
+      const fileName = `images/${Date.now()}.png`;
+
+      const { data, error } = await supabase.storage
+        .from("files")
+        .upload(fileName, buffer, {
+          contentType: "image/png",
+          upsert: true,
+        });
+
+      if (error) throw error;
+
+      const { data: urlData } = supabase.storage
+        .from("files")
+        .getPublicUrl(fileName);
+
+      const publicURL = urlData.publicUrl; // here is the fix
+      console.log(publicURL);
+
+      return publicURL;
+    } catch (error) {
+      console.error("Upload error:", error);
+      throw error;
+    }
+  };
   return (
     <View style={styles.bottomNav}>
       <TouchableOpacity style={styles.navBtn}>
