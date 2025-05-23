@@ -45,8 +45,6 @@ export default function Home() {
   function toggleCameraFacing() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
-  const delay = (ms: number | undefined) =>
-    new Promise((res) => setTimeout(res, ms));
 
   const takePicture = async () => {
     if (!cameraRef.current) return;
@@ -83,7 +81,6 @@ export default function Home() {
 
         console.log("✅ API response:", response.data.id);
         setImageKey(response.data.id);
-        await delay(30000);
         setIsShowing(true);
       } catch (error) {
         console.error("❌ Error calling Fashn API:");
