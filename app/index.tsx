@@ -11,6 +11,7 @@ import { useState } from "react";
 import React from "react";
 import Spinner from "react-native-loading-spinner-overlay";
 import { supabase } from "../config/initSupabase";
+import { PUSH } from "@/utils/pushDataToSupabase";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -33,9 +34,15 @@ export default function Login() {
   // Create a new user
   const onSignUpPress = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
+    });
+
+    PUSH("Elo_Users", {
+      email: email,
+      password: password,
+      uuid: data.user?.id,
     });
 
     if (error) Alert.alert(error.message);

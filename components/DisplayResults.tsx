@@ -1,7 +1,6 @@
 import { Colors } from "@/constants/Colors";
 import {
   Alert,
-  Button,
   Image,
   StyleSheet,
   Text,
@@ -13,16 +12,21 @@ import { useState, useEffect } from "react";
 import { Fold } from "react-native-animated-spinkit";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
-import * as FileSystem from "expo-file-system";
+import { PUSH } from "@/utils/pushDataToSupabase";
+import { supabase } from "@/config/initSupabase";
 
 interface DisplayResultsProps {
   setIsShowing: (e: boolean) => void;
   ImageKey: string;
+  model: string;
+  garment: string;
 }
 
 export default function DisplayResults({
   setIsShowing,
   ImageKey,
+  model,
+  garment,
 }: DisplayResultsProps) {
   const [result, setResult] = useState<string>("");
   const delay = (ms: number | undefined) =>
@@ -44,10 +48,13 @@ export default function DisplayResults({
 
       console.log("✅ API response:", response.data);
       const DATA = response.data.output;
+      let elm = "";
       DATA.forEach((element: any) => {
         console.log(element);
         setResult(element);
+        elm = element;
       });
+      SendToDb(elm);
     } catch (error) {
       console.error("❌ Error calling Fashn API:");
     }
@@ -72,6 +79,22 @@ export default function DisplayResults({
       console.error("Save error:", error);
       Alert.alert("Error", "Failed to save image.");
     }
+  }
+
+  async function SendToDb(elm: string) {
+    const { data, error } = await supabase.auth.getUser();
+
+    if (error) {
+      console.error("Error getting user:", error.message);
+    } else {
+      console.log("User data:", data.user.id);
+    }
+    PUSH("Elo_Images", {
+      model: model,
+      garment: garment,
+      result: elm,
+      userid: data.user?.id,
+    });
   }
 
   async function shareImage() {

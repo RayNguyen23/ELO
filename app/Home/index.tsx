@@ -1,5 +1,5 @@
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Alert,
   Button,
@@ -11,7 +11,8 @@ import {
 } from "react-native";
 import { uploadBase64Image } from "@/utils/uploadBase64Image";
 import axios from "axios";
-import { Grid } from "react-native-animated-spinkit";
+import { Swing } from "react-native-animated-spinkit";
+import { supabase } from "@/config/initSupabase";
 
 import NavBar from "../../components/NavBar";
 import { Colors } from "../../constants/Colors";
@@ -48,7 +49,7 @@ export default function Home() {
     setFacing((current) => (current === "back" ? "front" : "back"));
   }
 
-  const takePicture = async () => {
+  async function takePicture() {
     if (!cameraRef.current) return;
 
     try {
@@ -93,12 +94,21 @@ export default function Home() {
       console.error("Failed to take and upload photo:", error);
       Alert.alert("Error", "Failed to take and upload photo.");
     }
-  };
+  }
+
+  async function signOut() {
+    await supabase.auth.signOut();
+  }
 
   return (
     <>
       {isShowing ? (
-        <DisplayResults setIsShowing={setIsShowing} ImageKey={ImageKey} />
+        <DisplayResults
+          model={model_Image}
+          garment={garment_image}
+          setIsShowing={setIsShowing}
+          ImageKey={ImageKey}
+        />
       ) : (
         <View style={styles.container}>
           <Text style={styles.logo}>E L O</Text>
@@ -118,6 +128,14 @@ export default function Home() {
               style={{ width: "80%", height: "80%" }}
               alt=""
               source={require("../../assets/icons/revert.png")}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.outBtn} onPress={() => signOut()}>
+            <Image
+              resizeMode="contain"
+              style={{ width: "80%", height: "80%" }}
+              alt=""
+              source={require("../../assets/icons/out.png")}
             />
           </TouchableOpacity>
           {IsDisplayLoader === false ? <></> : <DisplayLoader />}
@@ -151,7 +169,7 @@ function DisplayLoader() {
           alignItems: "center",
         }}
       >
-        <Grid size={60} color="#FFF" />
+        <Swing size={60} color="#FFF" />
       </View>
     </View>
   );
@@ -191,6 +209,15 @@ const styles = StyleSheet.create({
     position: "absolute",
     marginTop: 50,
     right: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  outBtn: {
+    width: 30,
+    height: 30,
+    position: "absolute",
+    marginTop: 50,
+    left: 20,
     justifyContent: "center",
     alignItems: "center",
   },
