@@ -6,6 +6,7 @@ import { removeBackground } from "../constants/RemoveBg";
 import { decode as atob } from "base-64";
 import { supabase } from "@/config/initSupabase";
 import { uploadBase64Image } from "@/utils/uploadBase64Image";
+import * as FileSystem from "expo-file-system";
 
 interface NavBarProps {
   setGarment_image: (e: string) => void;
@@ -25,9 +26,17 @@ export default function NavBar({ takePicture, setGarment_image }: NavBarProps) {
     if (!result.canceled && result.assets.length > 0) {
       try {
         const uri = result.assets[0].uri;
-        const noBgImage = await removeBackground(uri); // returns base64
-        const uploadedUrl = await uploadBase64Image(noBgImage);
-        // setImage(uploadedUrl); // now a Supabase public URL
+
+        // Convert file URI to base64 string
+        const base64 = await FileSystem.readAsStringAsync(uri, {
+          encoding: "base64",
+        });
+
+        // Add data URI prefix (important!)
+        const base64WithPrefix = `data:image/jpeg;base64,${base64}`;
+
+        const uploadedUrl = await uploadBase64Image(base64WithPrefix);
+
         setGarment_image(uploadedUrl);
         setIsUploaded(true);
       } catch (error) {
