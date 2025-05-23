@@ -4384,6 +4384,11 @@ expo-error-recovery@~3.0.3:
   resolved "https://registry.npmjs.org/expo-error-recovery/-/expo-error-recovery-3.0.5.tgz"
   integrity sha512-VM6OOecjt0aPu5/eCdGGJfNjvAZIemaQym0JF/+SA5IlLiPpEfbVCDTO/5yiS8Zb5fKpeABx+GCRmtfnFqvRRw==
 
+expo-file-system@^18.1.10, expo-file-system@~18.1.10:
+  version "18.1.10"
+  resolved "https://registry.npmjs.org/expo-file-system/-/expo-file-system-18.1.10.tgz"
+  integrity sha512-SyaWg+HitScLuyEeSG9gMSDT0hIxbM9jiZjSBP9l9zMnwZjmQwsusE6+7qGiddxJzdOhTP4YGUfvEzeeS0YL3Q==
+
 expo-file-system@~13.0.0, expo-file-system@~13.0.3:
   version "13.0.3"
   resolved "https://registry.npmjs.org/expo-file-system/-/expo-file-system-13.0.3.tgz"
@@ -4392,11 +4397,6 @@ expo-file-system@~13.0.0, expo-file-system@~13.0.3:
     "@expo/config-plugins" "^4.0.2"
     expo-modules-core "~0.4.4"
     uuid "^3.4.0"
-
-expo-file-system@~18.1.10:
-  version "18.1.10"
-  resolved "https://registry.npmjs.org/expo-file-system/-/expo-file-system-18.1.10.tgz"
-  integrity sha512-SyaWg+HitScLuyEeSG9gMSDT0hIxbM9jiZjSBP9l9zMnwZjmQwsusE6+7qGiddxJzdOhTP4YGUfvEzeeS0YL3Q==
 
 expo-font@*, expo-font@~13.3.1:
   version "13.3.1"
@@ -4539,6 +4539,11 @@ expo-router@~5.0.6:
     semver "~7.6.3"
     server-only "^0.0.1"
     shallowequal "^1.1.0"
+
+expo-sharing@^13.1.5:
+  version "13.1.5"
+  resolved "https://registry.npmjs.org/expo-sharing/-/expo-sharing-13.1.5.tgz"
+  integrity sha512-X/5sAEiWXL2kdoGE3NO5KmbfcmaCWuWVZXHu8OQef7Yig4ZgHFkGD11HKJ5KqDrDg+SRZe4ISd6MxE7vGUgm4w==
 
 expo-splash-screen@~0.30.8:
   version "0.30.8"

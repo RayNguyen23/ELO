@@ -85,6 +85,7 @@ export default function Home() {
         console.log("✅ API response:", response.data.id);
         setImageKey(response.data.id);
         setIsShowing(true);
+        setIsDisplayLoader(false);
       } catch (error) {
         console.error("❌ Error calling Fashn API:");
       }

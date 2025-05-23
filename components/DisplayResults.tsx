@@ -12,6 +12,8 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import { Fold } from "react-native-animated-spinkit";
 import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system";
 
 interface DisplayResultsProps {
   setIsShowing: (e: boolean) => void;
@@ -72,6 +74,20 @@ export default function DisplayResults({
     }
   }
 
+  async function shareImage() {
+    try {
+      const available = await Sharing.isAvailableAsync();
+      if (!available) {
+        alert("Sharing is not available on this device");
+        return;
+      }
+      await Sharing.shareAsync(result);
+    } catch (error) {
+      console.error("Error sharing image:", error);
+      alert("Failed to share image");
+    }
+  }
+
   useEffect(() => {
     GetImage();
   }, []);
@@ -127,7 +143,10 @@ export default function DisplayResults({
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navBtn}>
+            <TouchableOpacity
+              style={styles.navBtn}
+              onPress={() => shareImage()}
+            >
               <Image
                 style={styles.navImage}
                 alt=""
