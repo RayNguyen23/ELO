@@ -11,6 +11,7 @@ import {
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { Fold } from "react-native-animated-spinkit";
+import * as MediaLibrary from "expo-media-library";
 
 interface DisplayResultsProps {
   setIsShowing: (e: boolean) => void;
@@ -24,9 +25,9 @@ export default function DisplayResults({
   const [result, setResult] = useState<string>("");
   const delay = (ms: number | undefined) =>
     new Promise((res) => setTimeout(res, ms));
+
   async function GetImage() {
     await delay(30000);
-
     try {
       console.log("Receive: ", ImageKey);
       const response = await axios.get(
@@ -47,6 +48,27 @@ export default function DisplayResults({
       });
     } catch (error) {
       console.error("❌ Error calling Fashn API:");
+    }
+  }
+
+  async function saveImageToDevice() {
+    try {
+      // Ask for permission
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission required",
+          "Please allow access to media library."
+        );
+        return;
+      }
+
+      // Save to gallery
+      await MediaLibrary.saveToLibraryAsync(result);
+      Alert.alert("Success", "Image saved to your device.");
+    } catch (error) {
+      console.error("Save error:", error);
+      Alert.alert("Error", "Failed to save image.");
     }
   }
 
@@ -94,7 +116,10 @@ export default function DisplayResults({
               />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navBtn}>
+            <TouchableOpacity
+              style={styles.navBtn}
+              onPress={() => saveImageToDevice()}
+            >
               <Image
                 style={styles.navImage}
                 alt=""

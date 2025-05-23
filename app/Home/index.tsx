@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { uploadBase64Image } from "@/utils/uploadBase64Image";
 import axios from "axios";
+import { Grid } from "react-native-animated-spinkit";
 
 import NavBar from "../../components/NavBar";
 import { Colors } from "../../constants/Colors";
@@ -26,6 +27,7 @@ export default function Home() {
   const [model_Image, setModel_Image] = useState<string>("");
   const [garment_image, setGarment_image] = useState<string>("");
   const [ImageKey, setImageKey] = useState<string>("");
+  const [IsDisplayLoader, setIsDisplayLoader] = useState<boolean>(false);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -57,11 +59,12 @@ export default function Home() {
       });
 
       if (!photo?.base64) throw new Error("No base64 data in photo");
-
+      setIsDisplayLoader(true);
       const base64 = `data:image/jpeg;base64,${photo.base64}`;
       const uploadedUrl = await uploadBase64Image(base64);
 
       setModel_Image(uploadedUrl);
+
       try {
         console.log(uploadedUrl, garment_image);
         const response = await axios.post(
@@ -116,6 +119,7 @@ export default function Home() {
               source={require("../../assets/icons/revert.png")}
             />
           </TouchableOpacity>
+          {IsDisplayLoader === false ? <></> : <DisplayLoader />}
           <NavBar
             takePicture={takePicture}
             setGarment_image={setGarment_image}
@@ -123,6 +127,32 @@ export default function Home() {
         </View>
       )}
     </>
+  );
+}
+
+function DisplayLoader() {
+  return (
+    <View
+      style={{
+        width: "100%",
+        position: "absolute",
+        top: "45%",
+        zIndex: 10,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <View
+        style={{
+          width: 60,
+          height: 60,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Grid size={60} color="#FFF" />
+      </View>
+    </View>
   );
 }
 
