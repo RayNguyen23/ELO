@@ -2,55 +2,69 @@ import { Colors } from "@/constants/Colors";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
-import { removeBackground } from "../constants/RemoveBg";
-import { decode as atob } from "base-64";
 import { supabase } from "@/config/initSupabase";
 import { uploadBase64Image } from "@/utils/uploadBase64Image";
 import * as FileSystem from "expo-file-system";
+import { useRouter } from "expo-router";
 
 interface NavBarProps {
-  setGarment_image: (e: string) => void;
-  takePicture: () => void;
+  setGarment_image?: (e: string) => void;
+  takePicture?: () => void;
+  isHome?: boolean;
 }
 
-export default function NavBar({ takePicture, setGarment_image }: NavBarProps) {
+export default function NavBar({
+  takePicture,
+  setGarment_image,
+  isHome,
+}: NavBarProps) {
   const [isUploaded, setIsUploaded] = useState<boolean>(false);
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
+  const router = useRouter();
 
-    if (!result.canceled && result.assets.length > 0) {
-      try {
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets.length > 0) {
         const uri = result.assets[0].uri;
 
-        // Convert file URI to base64 string
+        // ✅ Convert file URI to base64 string
         const base64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: "base64",
+          encoding: FileSystem.EncodingType.Base64,
         });
 
-        // Add data URI prefix (important!)
+        // ✅ Add the data URI prefix for proper recognition
         const base64WithPrefix = `data:image/jpeg;base64,${base64}`;
 
+        // ✅ Upload the base64 image and get the public URL
         const uploadedUrl = await uploadBase64Image(base64WithPrefix);
 
-        setGarment_image(uploadedUrl);
-        setIsUploaded(true);
-      } catch (error) {
-        console.error("Failed to process and upload image:", error);
-        Alert.alert("Error", "Failed to process and upload image.");
+        if (uploadedUrl) {
+          setGarment_image?.(uploadedUrl);
+          setIsUploaded(true);
+        } else {
+          throw new Error("Image upload failed.");
+        }
       }
+    } catch (error) {
+      console.error("❌ Failed to process and upload image:", error);
+      Alert.alert("Error", "Failed to process and upload image.");
     }
   };
 
   return (
     <>
-      {isUploaded === false ? (
+      {!isUploaded ? (
         <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navBtn}>
+          <TouchableOpacity
+            style={styles.navBtn}
+            onPress={() => router.replace("/Store")}
+          >
             <Image
               style={styles.navImage}
               alt=""
@@ -58,15 +72,31 @@ export default function NavBar({ takePicture, setGarment_image }: NavBarProps) {
             />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.navBtn} onPress={pickImage}>
-            <Image
-              style={styles.navImage}
-              alt=""
-              source={require("../assets/icons/upload.png")}
-            />
-          </TouchableOpacity>
+          {isHome ? (
+            <TouchableOpacity style={styles.navBtn} onPress={pickImage}>
+              <Image
+                style={styles.navImage}
+                alt=""
+                source={require("../assets/icons/upload.png")}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={styles.navBtn}
+              onPress={() => router.replace("/Home")}
+            >
+              <Image
+                style={styles.navImage}
+                alt=""
+                source={require("../assets/icons/home.png")}
+              />
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity style={styles.navBtn}>
+          <TouchableOpacity
+            style={styles.navBtn}
+            onPress={() => router.replace("/Settings")}
+          >
             <Image
               style={styles.navImage}
               alt=""
@@ -90,7 +120,7 @@ export default function NavBar({ takePicture, setGarment_image }: NavBarProps) {
           }}
         >
           <TouchableOpacity
-            onPress={() => takePicture()}
+            onPress={() => takePicture?.()}
             style={{
               width: "100%",
               height: "100%",
@@ -116,24 +146,18 @@ const styles = StyleSheet.create({
     position: "absolute",
     flexDirection: "row",
     bottom: 30,
-
     width: "90%",
     height: 50,
-
     borderRadius: 20,
-
     alignItems: "center",
     justifyContent: "space-around",
-
     backgroundColor: Colors.BlurGray,
   },
-
   navBtn: {
     width: 30,
     height: 30,
     justifyContent: "center",
     alignItems: "center",
   },
-
   navImage: { width: "80%", height: "80%" },
 });

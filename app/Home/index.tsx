@@ -38,7 +38,7 @@ export default function Home() {
   if (!permission.granted) {
     // Camera permissions are not granted yet.
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { justifyContent: "center" }]}>
         <Text>We need your permission to show the camera</Text>
         <Button onPress={requestPermission} title="grant permission" />
       </View>
@@ -142,6 +142,7 @@ export default function Home() {
           <NavBar
             takePicture={takePicture}
             setGarment_image={setGarment_image}
+            isHome={true}
           />
         </View>
       )}
@@ -187,7 +188,7 @@ const styles = StyleSheet.create({
     color: Colors.White,
     fontSize: 20,
     fontWeight: "bold",
-    marginTop: 50,
+    marginTop: 60,
     zIndex: 1,
   },
 
@@ -207,7 +208,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     position: "absolute",
-    marginTop: 50,
+    marginTop: 60,
     right: 20,
     justifyContent: "center",
     alignItems: "center",
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     position: "absolute",
-    marginTop: 50,
+    marginTop: 60,
     left: 20,
     justifyContent: "center",
     alignItems: "center",
