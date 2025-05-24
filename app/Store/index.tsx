@@ -37,41 +37,23 @@ function TopNav() {
   );
 }
 
-function SearchBar() {
+function SearchBar({
+  searchQuery,
+  setSearchQuery,
+}: {
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+}) {
   return (
-    <View
-      style={{
-        width: "90%",
-        height: 40,
-        borderWidth: 1,
-
-        flexDirection: "row",
-        alignItems: "center",
-
-        borderColor: Colors.White,
-        borderRadius: 10,
-        overflow: "hidden",
-      }}
-    >
+    <View style={styles.searchBarContainer}>
       <TextInput
         placeholder="Search..."
         placeholderTextColor={Colors.White}
-        style={{
-          width: "88%",
-          height: "100%",
-          paddingLeft: 10,
-          fontSize: 12,
-          color: Colors.White,
-        }}
+        value={searchQuery}
+        onChangeText={(text) => setSearchQuery(text)}
+        style={styles.searchInput}
       />
-      <TouchableOpacity
-        style={{
-          width: "12%",
-          height: "100%",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
+      <TouchableOpacity style={styles.searchIconContainer}>
         <Image
           alt=""
           style={{ width: "50%", height: "50%" }}
@@ -84,7 +66,9 @@ function SearchBar() {
 }
 
 export default function Store() {
-  const [Data, setData] = useState<Object>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filteredData, setFilteredData] = useState<string[]>([]);
+  const [Data, setData] = useState<string[]>([]);
   async function GetItems() {
     const { data, error } = await supabase.storage
       .from("files") // 'files' is the bucket name
@@ -111,17 +95,23 @@ export default function Store() {
     GetItems();
   }, []);
 
+  useEffect(() => {
+    const filtered = Data.filter((url) =>
+      url.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredData(filtered);
+  }, [searchQuery, Data]);
+
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>E L O</Text>
 
       <TopNav />
 
-      <View style={{ width: "100%", marginTop: 120, alignItems: "center" }}>
-        <SearchBar />
+      <View style={{ width: "100%", marginTop: 100, alignItems: "center" }}>
+        {/* <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> */}
         <FlatList
-          data={Data}
-          style={{ marginTop: 20 }}
+          data={filteredData}
           numColumns={2}
           keyExtractor={(item, index) => `${item}-${index}`}
           contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 20 }}
@@ -147,6 +137,30 @@ export default function Store() {
 }
 
 const styles = StyleSheet.create({
+  searchBarContainer: {
+    width: "90%",
+    height: 40,
+    borderWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    borderColor: Colors.White,
+    borderRadius: 10,
+    overflow: "hidden",
+  },
+  searchInput: {
+    width: "88%",
+    height: "100%",
+    paddingLeft: 10,
+    fontSize: 12,
+    color: Colors.White,
+  },
+  searchIconContainer: {
+    width: "12%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   card: {
     width: "48%",
     height: 250,
