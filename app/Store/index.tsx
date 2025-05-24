@@ -117,13 +117,11 @@ export default function Store() {
 
       <TopNav />
 
-      <ScrollView
-        style={{ width: "100%", marginTop: 120 }}
-        contentContainerStyle={{ alignItems: "center" }}
-      >
+      <View style={{ width: "100%", marginTop: 120, alignItems: "center" }}>
         <SearchBar />
         <FlatList
           data={Data}
+          style={{ marginTop: 20 }}
           numColumns={2}
           keyExtractor={(item, index) => `${item}-${index}`}
           contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 20 }}
@@ -141,7 +139,7 @@ export default function Store() {
             </TouchableOpacity>
           )}
         />
-      </ScrollView>
+      </View>
 
       <NavBar />
     </View>
