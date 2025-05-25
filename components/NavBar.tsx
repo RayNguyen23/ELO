@@ -86,7 +86,9 @@ export default function NavBar({
           ) : (
             <TouchableOpacity
               style={styles.navBtn}
-              onPress={() => router.replace("/Home")}
+              onPress={() => {
+                router.replace("/Home"), setIsUploaded?.(false);
+              }}
             >
               <Image
                 style={styles.navImage}

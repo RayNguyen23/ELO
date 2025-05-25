@@ -114,6 +114,7 @@ export default function Home() {
     <>
       {isShowing ? (
         <DisplayResults
+          setIsUploaded={setIsUploaded}
           model={model_Image}
           garment={garment_image}
           setIsShowing={setIsShowing}

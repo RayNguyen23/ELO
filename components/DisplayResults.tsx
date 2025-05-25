@@ -17,6 +17,7 @@ import { supabase } from "@/config/initSupabase";
 
 interface DisplayResultsProps {
   setIsShowing: (e: boolean) => void;
+  setIsUploaded: (e: boolean) => void;
   ImageKey: string;
   model: string;
   garment: string;
@@ -24,6 +25,7 @@ interface DisplayResultsProps {
 
 export default function DisplayResults({
   setIsShowing,
+  setIsUploaded,
   ImageKey,
   model,
   garment,
@@ -33,7 +35,7 @@ export default function DisplayResults({
     new Promise((res) => setTimeout(res, ms));
 
   async function GetImage() {
-    await delay(30000);
+    await delay(15000);
     try {
       console.log("Receive: ", ImageKey);
       const response = await axios.get(
@@ -146,7 +148,10 @@ export default function DisplayResults({
           <View style={styles.bottomNav}>
             <TouchableOpacity
               style={styles.navBtn}
-              onPress={() => setIsShowing(false)}
+              onPress={() => {
+                setIsShowing(false);
+                setIsUploaded(false);
+              }}
             >
               <Image
                 style={styles.navImage}
