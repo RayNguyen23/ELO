@@ -13,6 +13,7 @@ import { supabase } from "@/config/initSupabase";
 
 import NavBar from "@/components/NavBar";
 import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
 
 function TopNav() {
   return (
@@ -69,6 +70,9 @@ export default function Store() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [filteredData, setFilteredData] = useState<string[]>([]);
   const [Data, setData] = useState<string[]>([]);
+
+  const router = useRouter();
+
   async function GetItems() {
     const { data, error } = await supabase.storage
       .from("files") // 'files' is the bucket name
@@ -120,7 +124,15 @@ export default function Store() {
             marginBottom: 15,
           }}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.card}>
+            <TouchableOpacity
+              style={styles.card}
+              onPress={() =>
+                router.replace({
+                  pathname: "/ViewItem",
+                  params: { itemUrl: item },
+                })
+              }
+            >
               <Image
                 source={{ uri: item }}
                 style={styles.image}
