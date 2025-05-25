@@ -6,9 +6,10 @@ import { Colors } from "@/constants/Colors";
 interface BottomProps {
   IsSaved: boolean;
   setIsSaved: (e: boolean) => void;
+  MoveToHome: () => void;
 }
 
-function BottomNav({ IsSaved, setIsSaved }: BottomProps) {
+function BottomNav({ IsSaved, setIsSaved, MoveToHome }: BottomProps) {
   return (
     <View style={styles.BottomContainer}>
       <TouchableOpacity
@@ -53,6 +54,7 @@ function BottomNav({ IsSaved, setIsSaved }: BottomProps) {
           justifyContent: "center",
           alignItems: "center",
         }}
+        onPress={() => MoveToHome()}
       >
         <Text style={{ color: Colors.Black, fontSize: 14, fontWeight: "600" }}>
           Use this Item
@@ -67,6 +69,13 @@ export default function ViewItem() {
   const { itemUrl } = useLocalSearchParams();
   const imageUrl = Array.isArray(itemUrl) ? itemUrl[0] : itemUrl;
   const router = useRouter();
+
+  function MoveToHome() {
+    router.replace({
+      pathname: "/Home",
+      params: { itemUrl: imageUrl },
+    });
+  }
 
   return (
     <View style={styles.container}>
@@ -90,7 +99,11 @@ export default function ViewItem() {
           source={{ uri: imageUrl }}
         />
       </View>
-      <BottomNav IsSaved={IsSaved} setIsSaved={setIsSaved} />
+      <BottomNav
+        IsSaved={IsSaved}
+        setIsSaved={setIsSaved}
+        MoveToHome={MoveToHome}
+      />
     </View>
   );
 }
@@ -122,11 +135,11 @@ const styles = StyleSheet.create({
 
   ImageContainer: {
     position: "absolute",
-    top: "13%",
+    top: "18%",
     zIndex: 10,
 
     width: "90%",
-    height: "75%",
+    height: "65%",
 
     borderRadius: 10,
 

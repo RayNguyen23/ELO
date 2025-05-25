@@ -11,14 +11,17 @@ interface NavBarProps {
   setGarment_image?: (e: string) => void;
   takePicture?: () => void;
   isHome?: boolean;
+  isUploaded?: boolean;
+  setIsUploaded?: (e: boolean) => void;
 }
 
 export default function NavBar({
   takePicture,
   setGarment_image,
   isHome,
+  isUploaded,
+  setIsUploaded,
 }: NavBarProps) {
-  const [isUploaded, setIsUploaded] = useState<boolean>(false);
   const router = useRouter();
 
   const pickImage = async () => {
@@ -46,7 +49,7 @@ export default function NavBar({
 
         if (uploadedUrl) {
           setGarment_image?.(uploadedUrl);
-          setIsUploaded(true);
+          setIsUploaded?.(true);
         } else {
           throw new Error("Image upload failed.");
         }

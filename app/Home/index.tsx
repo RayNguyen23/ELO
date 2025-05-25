@@ -13,6 +13,7 @@ import { uploadBase64Image } from "@/utils/uploadBase64Image";
 import axios from "axios";
 import { Swing } from "react-native-animated-spinkit";
 import { supabase } from "@/config/initSupabase";
+import { useLocalSearchParams } from "expo-router";
 
 import NavBar from "../../components/NavBar";
 import { Colors } from "../../constants/Colors";
@@ -22,13 +23,22 @@ import DisplayResults from "@/components/DisplayResults";
 export default function Home() {
   const [facing, setFacing] = useState<CameraType>("front");
   const [permission, requestPermission] = useCameraPermissions();
-  const [image, setImage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
   const [isShowing, setIsShowing] = useState<boolean>(false);
   const [model_Image, setModel_Image] = useState<string>("");
   const [garment_image, setGarment_image] = useState<string>("");
   const [ImageKey, setImageKey] = useState<string>("");
   const [IsDisplayLoader, setIsDisplayLoader] = useState<boolean>(false);
+  const [isUploaded, setIsUploaded] = useState<boolean>(false);
+  const { itemUrl = "" } = useLocalSearchParams();
+  const imageUrl = Array.isArray(itemUrl) ? itemUrl[0] : itemUrl;
+
+  useEffect(() => {
+    if (imageUrl) {
+      setGarment_image(imageUrl);
+      setIsUploaded(true);
+    }
+  }, [imageUrl]);
 
   if (!permission) {
     // Camera permissions are still loading.
@@ -130,19 +140,36 @@ export default function Home() {
               source={require("../../assets/icons/revert.png")}
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.outBtn} onPress={() => signOut()}>
-            <Image
-              resizeMode="contain"
-              style={{ width: "80%", height: "80%" }}
-              alt=""
-              source={require("../../assets/icons/out.png")}
-            />
-          </TouchableOpacity>
+          {isUploaded ? (
+            <TouchableOpacity
+              style={styles.outBtn}
+              onPress={() => setIsUploaded(false)}
+            >
+              <Image
+                resizeMode="contain"
+                style={{ width: "60%", height: "60%" }}
+                alt=""
+                source={require("../../assets/icons/back.png")}
+              />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.outBtn} onPress={() => signOut()}>
+              <Image
+                resizeMode="contain"
+                style={{ width: "80%", height: "80%" }}
+                alt=""
+                source={require("../../assets/icons/out.png")}
+              />
+            </TouchableOpacity>
+          )}
+
           {IsDisplayLoader === false ? <></> : <DisplayLoader />}
           <NavBar
             takePicture={takePicture}
             setGarment_image={setGarment_image}
             isHome={true}
+            isUploaded={isUploaded}
+            setIsUploaded={setIsUploaded}
           />
         </View>
       )}
