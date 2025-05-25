@@ -83,7 +83,6 @@ export default function Home() {
           {
             model_image: uploadedUrl,
             garment_image: garment_image,
-            category: "tops",
           },
           {
             headers: {

@@ -35,7 +35,7 @@ export default function DisplayResults({
     new Promise((res) => setTimeout(res, ms));
 
   async function GetImage() {
-    await delay(15000);
+    await delay(10000);
     try {
       console.log("Receive: ", ImageKey);
       const response = await axios.get(
