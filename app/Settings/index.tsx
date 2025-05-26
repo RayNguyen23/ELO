@@ -31,6 +31,8 @@ function Items({ ImageName, Name, router }: ItemProps) {
           signOut();
         } else if (Name === "Saved") {
           router.replace("/Saved");
+        } else if (Name === "Language") {
+          router.replace("/Language");
         }
       }}
     >
