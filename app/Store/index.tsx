@@ -129,7 +129,7 @@ export default function Store() {
               onPress={() =>
                 router.replace({
                   pathname: "/ViewItem",
-                  params: { itemUrl: item },
+                  params: { itemUrl: item, to: "/Store" },
                 })
               }
             >

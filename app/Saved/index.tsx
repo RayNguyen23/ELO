@@ -35,8 +35,6 @@ function TopNav({ router }: TopNavProps) {
 }
 
 export default function Saved() {
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [filteredData, setFilteredData] = useState<string[]>([]);
   const [Data, setData] = useState<string[]>([]);
 
   const router = useRouter();
@@ -67,13 +65,6 @@ export default function Saved() {
     GetItems();
   }, []);
 
-  useEffect(() => {
-    const filtered = Data.filter((url) =>
-      url.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredData(filtered);
-  }, [searchQuery, Data]);
-
   return (
     <View style={styles.container}>
       <Text style={styles.logo}>E L O</Text>
@@ -82,7 +73,7 @@ export default function Saved() {
 
       <View style={{ width: "100%", marginTop: 100, alignItems: "center" }}>
         <FlatList
-          data={filteredData}
+          data={Data}
           numColumns={2}
           keyExtractor={(item, index) => `${item}-${index}`}
           contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 20 }}
@@ -96,7 +87,7 @@ export default function Saved() {
               onPress={() =>
                 router.replace({
                   pathname: "/ViewItem",
-                  params: { itemUrl: item },
+                  params: { itemUrl: item, to: "/Settings" },
                 })
               }
             >
