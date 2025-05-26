@@ -1,7 +1,8 @@
+import { supabase } from "@/config/initSupabase";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Clipboard,
@@ -227,12 +228,15 @@ const TransferDetails: React.FC<TransferDetailsProps> = ({
 
 export default function Payments() {
   const router = useRouter();
+  const { amount } = useLocalSearchParams();
+  const Amount = Array.isArray(amount) ? amount[0] : amount;
+  const [TransferCode, setTransferCode] = useState<string>("");
   const [selectedMethod, setSelectedMethod] = useState<
     "domestic" | "international"
   >("domestic");
 
   const handleBackPress = () => {
-    router.replace("/Settings");
+    router.replace("/Subscriptions");
   };
 
   const handleMethodSelect = (method: "domestic" | "international") => {
@@ -253,7 +257,43 @@ export default function Payments() {
     bankName: "TECHCOMBANK",
   };
 
-  const transferCode = "41284719284";
+  async function GetTransferCode() {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) return;
+
+    const uuid = authData.user.id;
+    const { data, error } = await supabase
+      .from("Elo_Users")
+      .select("transfer_code")
+      .eq("uuid", uuid);
+
+    if (error) {
+      console.error("Supabase error:", error);
+    } else {
+      setTransferCode(data?.[0]?.transfer_code);
+    }
+  }
+
+  async function DoneTransacton() {
+    const { data, error } = await supabase.from("Elo_Upgrade").insert({
+      transfer_id: TransferCode,
+      amount: Amount,
+      isDone: false,
+    });
+    if (error) {
+      console.error("Supabase error:", error);
+    } else {
+      Alert.alert(
+        "Processing Your Payment",
+        "Please come back in a few minutes!"
+      );
+      router.replace("/Home");
+    }
+  }
+
+  useEffect(() => {
+    GetTransferCode();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -295,12 +335,27 @@ export default function Payments() {
               bankName={bankData.bankName}
             />
 
-            <TransferDetails
-              transferCode={transferCode}
-              amount="Contact for amount"
-            />
+            <TransferDetails transferCode={TransferCode} amount={Amount} />
           </>
         )}
+        <TouchableOpacity
+          style={{
+            marginBottom: 30,
+            width: "100%",
+            height: 40,
+            backgroundColor: Colors.LightBlue,
+            borderRadius: 20,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+          onPress={() => DoneTransacton()}
+        >
+          <Text
+            style={{ fontSize: 16, color: Colors.Black, fontWeight: "600" }}
+          >
+            Complete
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

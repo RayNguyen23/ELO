@@ -37,7 +37,7 @@ function Items({ ImageName, Name, router }: ItemProps) {
         } else if (Name === "Terms of Service") {
           Linking.openURL("https://scarlet-technology.com");
         } else if (Name === "Payments & Subscriptions") {
-          router.replace("/Payments");
+          router.replace("/Subscriptions");
         }
       }}
     >

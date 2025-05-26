@@ -1,21 +1,20 @@
+import { Colors } from "@/constants/Colors";
+import { PUSH } from "@/utils/pushDataToSupabase";
+import React, { useState } from "react";
 import {
   Alert,
-  View,
-  TextInput,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   Dimensions,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { useState } from "react";
-import React from "react";
 import Spinner from "react-native-loading-spinner-overlay";
 import { supabase } from "../config/initSupabase";
-import { PUSH } from "@/utils/pushDataToSupabase";
-import { Colors } from "@/constants/Colors";
 
 const { width, height } = Dimensions.get("window");
 
@@ -26,6 +25,10 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+
+  const generateRandomCode = (): string => {
+    return Math.floor(10000000 + Math.random() * 90000000).toString();
+  };
 
   // Sign in with email and password
   const onSignInPress = async () => {
@@ -78,16 +81,14 @@ export default function Auth() {
         password: password,
         uuid: data.user.id,
         display_name: displayName,
+        transfer_code: generateRandomCode(),
       });
     }
 
     if (error) {
       Alert.alert("Sign Up Error", error.message);
     } else {
-      Alert.alert(
-        "Success",
-        "Account created successfully! Please check your email for verification."
-      );
+      Alert.alert("Success", "Account created successfully!");
     }
     setLoading(false);
   };
