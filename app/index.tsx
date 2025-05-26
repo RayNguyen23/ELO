@@ -1,11 +1,14 @@
 import {
   Alert,
   View,
-  Button,
   TextInput,
   StyleSheet,
   Text,
   TouchableOpacity,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useState } from "react";
 import React from "react";
@@ -14,14 +17,23 @@ import { supabase } from "../config/initSupabase";
 import { PUSH } from "@/utils/pushDataToSupabase";
 import { Colors } from "@/constants/Colors";
 
-export default function Login() {
+const { width, height } = Dimensions.get("window");
+
+export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
 
   // Sign in with email and password
   const onSignInPress = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -29,18 +41,33 @@ export default function Login() {
       password,
     });
 
-    if (error) Alert.alert(error.message);
+    if (error) Alert.alert("Sign In Error", error.message);
     setLoading(false);
   };
 
   const onSignUpPress = async () => {
+    if (!email || !password || !displayName) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match");
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert("Error", "Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
       options: {
         data: {
-          display_name: displayName, // 👈 store in auth user metadata
+          display_name: displayName,
         },
       },
     });
@@ -50,84 +77,277 @@ export default function Login() {
         email: email,
         password: password,
         uuid: data.user.id,
-        display_name: displayName, // optional: store in your own table too
+        display_name: displayName,
       });
     }
 
-    if (error) Alert.alert(error.message);
+    if (error) {
+      Alert.alert("Sign Up Error", error.message);
+    } else {
+      Alert.alert(
+        "Success",
+        "Account created successfully! Please check your email for verification."
+      );
+    }
     setLoading(false);
   };
 
+  const toggleAuthMode = () => {
+    setIsSignUp(!isSignUp);
+    // Clear form when switching modes
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setDisplayName("");
+  };
+
   return (
-    <View style={styles.container}>
-      <Spinner visible={loading} />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <Spinner visible={loading} />
 
-      <Text style={styles.header}>My Cloud</Text>
+        {/* Header Section */}
+        <View style={styles.headerContainer}>
+          <Text style={styles.header}>
+            E{"   "}L{"   "}O
+          </Text>
+          <Text style={styles.subtitle}>
+            {isSignUp ? "Create your account" : "Welcome back"}
+          </Text>
+        </View>
 
-      <TextInput
-        autoCapitalize="none"
-        placeholderTextColor={Colors.White}
-        placeholder="john@doe.com"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.inputField}
-      />
-      <TextInput
-        placeholder="password"
-        placeholderTextColor={Colors.White}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.inputField}
-      />
-      <TextInput
-        placeholder="Display Name"
-        placeholderTextColor={Colors.White}
-        value={displayName}
-        onChangeText={setDisplayName}
-        style={styles.inputField}
-      />
+        {/* Form Section */}
+        <View style={styles.formContainer}>
+          {/* Auth Mode Toggle */}
+          <View style={styles.toggleContainer}>
+            <TouchableOpacity
+              style={[styles.toggleButton, !isSignUp && styles.activeToggle]}
+              onPress={() => (!isSignUp ? null : toggleAuthMode())}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  !isSignUp && styles.activeToggleText,
+                ]}
+              >
+                Sign In
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.toggleButton, isSignUp && styles.activeToggle]}
+              onPress={() => (isSignUp ? null : toggleAuthMode())}
+            >
+              <Text
+                style={[styles.toggleText, isSignUp && styles.activeToggleText]}
+              >
+                Sign Up
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-      <TouchableOpacity onPress={onSignInPress} style={styles.button}>
-        <Text style={{ color: "#fff" }}>Sign in</Text>
-      </TouchableOpacity>
-      <Button
-        onPress={onSignUpPress}
-        title="Create Account"
-        color={"#fff"}
-      ></Button>
-    </View>
+          {/* Input Fields */}
+          {isSignUp && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Display Name</Text>
+              <TextInput
+                placeholder="Enter your display name"
+                placeholderTextColor={Colors.White + "80"}
+                value={displayName}
+                onChangeText={setDisplayName}
+                style={styles.inputField}
+              />
+            </View>
+          )}
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Email</Text>
+            <TextInput
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholderTextColor={Colors.White + "80"}
+              placeholder="Enter your email"
+              value={email}
+              onChangeText={setEmail}
+              style={styles.inputField}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <TextInput
+              placeholder="Enter your password"
+              placeholderTextColor={Colors.White + "80"}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              style={styles.inputField}
+            />
+          </View>
+
+          {isSignUp && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Confirm Password</Text>
+              <TextInput
+                placeholder="Confirm your password"
+                placeholderTextColor={Colors.White + "80"}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                secureTextEntry
+                style={styles.inputField}
+              />
+            </View>
+          )}
+
+          {/* Action Button */}
+          <TouchableOpacity
+            onPress={isSignUp ? onSignUpPress : onSignInPress}
+            style={styles.primaryButton}
+            disabled={loading}
+          >
+            <Text style={styles.primaryButtonText}>
+              {isSignUp ? "Create Account" : "Sign In"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Alternative Action */}
+          <View style={styles.alternativeContainer}>
+            <Text style={styles.alternativeText}>
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}
+            </Text>
+            <TouchableOpacity onPress={toggleAuthMode}>
+              <Text style={styles.alternativeLink}>
+                {isSignUp ? " Sign In" : " Sign Up"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 200,
-    padding: 20,
     backgroundColor: "#151515",
   },
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+  },
+  headerContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
   header: {
-    fontSize: 30,
-    textAlign: "center",
-    margin: 50,
+    fontSize: 32,
+    fontWeight: "bold",
     color: "#fff",
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: Colors.White + "80",
+    textAlign: "center",
+  },
+  formContainer: {
+    backgroundColor: "#1f1f1f",
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    backgroundColor: "#363636",
+    borderRadius: 8,
+    padding: 4,
+    marginBottom: 24,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    borderRadius: 6,
+  },
+  activeToggle: {
+    backgroundColor: "#2b825b",
+  },
+  toggleText: {
+    color: Colors.White + "80",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  activeToggleText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 8,
   },
   inputField: {
-    marginVertical: 4,
     height: 50,
     borderWidth: 1,
-    borderColor: "#2b825b",
-    borderRadius: 4,
-    padding: 10,
+    borderColor: "#363636",
+    borderRadius: 8,
+    paddingHorizontal: 16,
     color: "#fff",
     backgroundColor: "#363636",
+    fontSize: 16,
   },
-  button: {
-    marginVertical: 15,
-    alignItems: "center",
+  primaryButton: {
     backgroundColor: "#2b825b",
-    padding: 12,
-    borderRadius: 4,
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+    shadowColor: "#2b825b",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  primaryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  alternativeContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 24,
+  },
+  alternativeText: {
+    color: Colors.White + "80",
+    fontSize: 14,
+  },
+  alternativeLink: {
+    color: "#2b825b",
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

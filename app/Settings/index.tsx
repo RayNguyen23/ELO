@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Image,
   ImageSourcePropType,
+  Linking,
 } from "react-native";
 
 import NavBar from "@/components/NavBar";
@@ -33,6 +34,8 @@ function Items({ ImageName, Name, router }: ItemProps) {
           router.replace("/Saved");
         } else if (Name === "Language") {
           router.replace("/Language");
+        } else if (Name === "Terms of Service") {
+          Linking.openURL("https://scarlet-technology.com");
         }
       }}
     >

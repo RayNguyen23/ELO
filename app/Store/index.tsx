@@ -15,10 +15,19 @@ import NavBar from "@/components/NavBar";
 import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 
-function TopNav() {
+interface TopNavProps {
+  router: any;
+}
+
+function TopNav({ router }: TopNavProps) {
   return (
     <View style={styles.topNav}>
-      <TouchableOpacity style={styles.topNavBtn}>
+      <TouchableOpacity
+        style={styles.topNavBtn}
+        onPress={() => {
+          router.replace("/Saved");
+        }}
+      >
         <Image
           alt=""
           style={{ width: "50%", height: "50%" }}
@@ -110,7 +119,7 @@ export default function Store() {
     <View style={styles.container}>
       <Text style={styles.logo}>E L O</Text>
 
-      <TopNav />
+      <TopNav router={router} />
 
       <View style={{ width: "100%", marginTop: 100, alignItems: "center" }}>
         {/* <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} /> */}
