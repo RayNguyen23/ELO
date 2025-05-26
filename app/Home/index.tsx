@@ -77,7 +77,6 @@ export default function Home() {
       setModel_Image(uploadedUrl);
 
       try {
-        console.log(uploadedUrl, garment_image);
         const response = await axios.post(
           "https://api.fashn.ai/v1/run",
           {
@@ -92,7 +91,6 @@ export default function Home() {
           }
         );
 
-        console.log("✅ API response:", response.data.id);
         setImageKey(response.data.id);
         setIsShowing(true);
         setIsDisplayLoader(false);

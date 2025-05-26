@@ -37,7 +37,6 @@ export default function DisplayResults({
   async function GetImage() {
     await delay(10000);
     try {
-      console.log("Receive: ", ImageKey);
       const response = await axios.get(
         `https://api.fashn.ai/v1/status/${ImageKey}`,
         {
@@ -48,11 +47,9 @@ export default function DisplayResults({
         }
       );
 
-      console.log("✅ API response:", response.data);
       const DATA = response.data.output;
       let elm = "";
       DATA.forEach((element: any) => {
-        console.log(element);
         setResult(element);
         elm = element;
       });

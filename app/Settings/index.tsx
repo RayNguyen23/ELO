@@ -11,6 +11,7 @@ import {
 import NavBar from "@/components/NavBar";
 import { Colors } from "@/constants/Colors";
 import { supabase } from "@/config/initSupabase";
+import { useRouter } from "expo-router";
 
 interface ItemProps {
   ImageName: ImageSourcePropType;
@@ -77,6 +78,7 @@ function Items({ ImageName, Name }: ItemProps) {
 export default function Store() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [displayName, setDisplayName] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -127,7 +129,10 @@ export default function Store() {
       <Text style={styles.Name}>{displayName}</Text>
       <Text style={styles.Mail}>{userEmail}</Text>
 
-      <TouchableOpacity style={styles.EditProfile}>
+      <TouchableOpacity
+        style={styles.EditProfile}
+        onPress={() => router.replace("/EditProfile")}
+      >
         <Text style={{ fontSize: 14, fontWeight: "600" }}>Edit Profile</Text>
       </TouchableOpacity>
 
@@ -185,7 +190,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.LightBlue,
   },
 
-  Name: { color: Colors.White, fontSize: 18, fontWeight: "600", marginTop: 10 },
+  Name: { color: Colors.White, fontSize: 18, fontWeight: "600", marginTop: 20 },
   Mail: { color: Colors.White, fontSize: 14, fontWeight: "300", marginTop: 5 },
   FunctionContainer: {
     marginBottom: 30,
