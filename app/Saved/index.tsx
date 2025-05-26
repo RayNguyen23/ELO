@@ -40,25 +40,29 @@ export default function Saved() {
   const router = useRouter();
 
   async function GetItems() {
-    const { data, error } = await supabase.storage
-      .from("files") // 'files' is the bucket name
-      .list("stores/", {
-        limit: 100,
-        offset: 0,
-        sortBy: { column: "name", order: "asc" },
-      });
+    // Step 1: Get the current user
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData?.user) {
+      console.error("Auth error:", authError);
+      return;
+    }
+
+    const uuid = authData.user.id;
+
+    // Step 2: Query Elo_Saved for all entries with this uuid
+    const { data, error } = await supabase
+      .from("Elo_Saved")
+      .select("ImageUrl")
+      .eq("uuid", uuid);
 
     if (error) {
-      console.error("Error listing files:", error);
-    } else {
-      const publicUrls = data.map((file) => {
-        const { data: publicUrlData } = supabase.storage
-          .from("files")
-          .getPublicUrl(`stores/${file.name}`);
-        return publicUrlData.publicUrl;
-      });
-      setData(publicUrls);
+      console.error("Error fetching saved items:", error);
+      return;
     }
+
+    // Step 3: Extract ImageUrl list and set it
+    const imageUrls = data.map((item) => item.ImageUrl);
+    setData(imageUrls);
   }
 
   useEffect(() => {
@@ -75,6 +79,7 @@ export default function Saved() {
         <FlatList
           data={Data}
           numColumns={2}
+          style={{ width: "90%" }}
           keyExtractor={(item, index) => `${item}-${index}`}
           contentContainerStyle={{ paddingHorizontal: 10, paddingTop: 20 }}
           columnWrapperStyle={{
@@ -87,7 +92,7 @@ export default function Saved() {
               onPress={() =>
                 router.replace({
                   pathname: "/ViewItem",
-                  params: { itemUrl: item, to: "/Settings" },
+                  params: { itemUrl: item, to: "/Saved" },
                 })
               }
             >
