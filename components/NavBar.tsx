@@ -1,11 +1,11 @@
-import { Colors } from "@/constants/Colors";
-import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
-import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 import { supabase } from "@/config/initSupabase";
+import { Colors } from "@/constants/Colors";
 import { uploadBase64Image } from "@/utils/uploadBase64Image";
 import * as FileSystem from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
+import React from "react";
+import { Alert, Image, StyleSheet, TouchableOpacity, View } from "react-native";
 
 interface NavBarProps {
   setGarment_image?: (e: string) => void;
@@ -25,6 +25,27 @@ export default function NavBar({
   const router = useRouter();
 
   const pickImage = async () => {
+    const { data: authData, error: authError } = await supabase.auth.getUser();
+    if (authError || !authData.user) return;
+
+    const uuid = authData.user.id;
+    const { data, error } = await supabase
+      .from("Elo_Users")
+      .select("current_use, left")
+      .eq("uuid", uuid)
+      .single();
+    if (error) {
+      console.log(error);
+    } else {
+      if (Number(data.current_use) === Number(data.left)) {
+        Alert.alert(
+          "Out of turns",
+          "You’ve used all your turns. Please purchase more to continue."
+        );
+        router.replace("/Subscriptions");
+        return;
+      }
+    }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,

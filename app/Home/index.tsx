@@ -1,5 +1,9 @@
+import { supabase } from "@/config/initSupabase";
+import { uploadBase64Image } from "@/utils/uploadBase64Image";
+import axios from "axios";
 import { CameraType, CameraView, useCameraPermissions } from "expo-camera";
-import React, { useState, useRef, useEffect } from "react";
+import { useLocalSearchParams } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   Button,
@@ -9,11 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { uploadBase64Image } from "@/utils/uploadBase64Image";
-import axios from "axios";
 import { Swing } from "react-native-animated-spinkit";
-import { supabase } from "@/config/initSupabase";
-import { useLocalSearchParams } from "expo-router";
 
 import NavBar from "../../components/NavBar";
 import { Colors } from "../../constants/Colors";
@@ -30,6 +30,7 @@ export default function Home() {
   const [ImageKey, setImageKey] = useState<string>("");
   const [IsDisplayLoader, setIsDisplayLoader] = useState<boolean>(false);
   const [isUploaded, setIsUploaded] = useState<boolean>(false);
+
   const { itemUrl = "" } = useLocalSearchParams();
   const imageUrl = Array.isArray(itemUrl) ? itemUrl[0] : itemUrl;
 

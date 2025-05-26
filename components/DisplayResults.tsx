@@ -1,4 +1,10 @@
+import { supabase } from "@/config/initSupabase";
 import { Colors } from "@/constants/Colors";
+import { PUSH } from "@/utils/pushDataToSupabase";
+import axios from "axios";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -7,13 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import axios from "axios";
-import { useState, useEffect } from "react";
 import { Fold } from "react-native-animated-spinkit";
-import * as MediaLibrary from "expo-media-library";
-import * as Sharing from "expo-sharing";
-import { PUSH } from "@/utils/pushDataToSupabase";
-import { supabase } from "@/config/initSupabase";
 
 interface DisplayResultsProps {
   setIsShowing: (e: boolean) => void;
@@ -31,11 +31,14 @@ export default function DisplayResults({
   garment,
 }: DisplayResultsProps) {
   const [result, setResult] = useState<string>("");
+  const [CurrentUse, setCurrentUse] = useState<string>("");
+  const [Max, setMax] = useState<string>("");
+  const [UUID, setUUID] = useState<string>("");
   const delay = (ms: number | undefined) =>
     new Promise((res) => setTimeout(res, ms));
 
   async function GetImage() {
-    await delay(10000);
+    await delay(15000);
     try {
       const response = await axios.get(
         `https://api.fashn.ai/v1/status/${ImageKey}`,
@@ -54,6 +57,19 @@ export default function DisplayResults({
         elm = element;
       });
       SendToDb(elm);
+      const CurrentUseToInt = Number(CurrentUse);
+      const { data, error } = await supabase
+        .from("Elo_Users")
+        .update({
+          current_use: CurrentUseToInt + 1,
+        })
+        .eq("uuid", UUID);
+
+      if (error) {
+        console.log(error);
+      } else {
+        console.log(data);
+      }
     } catch (error) {
       console.error("❌ Error calling Fashn API:");
     }
@@ -112,6 +128,29 @@ export default function DisplayResults({
 
   useEffect(() => {
     GetImage();
+  }, []);
+
+  useEffect(() => {
+    async function GetTurns() {
+      const { data: authData, error: authError } =
+        await supabase.auth.getUser();
+      if (authError || !authData.user) return;
+
+      const uuid = authData.user.id;
+      const { data, error } = await supabase
+        .from("Elo_Users")
+        .select("current_use, left")
+        .eq("uuid", uuid)
+        .single();
+      if (error) {
+        console.log(error);
+      } else {
+        setCurrentUse(data.current_use);
+        setMax(data.left);
+        setUUID(uuid);
+      }
+    }
+    GetTurns();
   }, []);
 
   return (
