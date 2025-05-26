@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
   Image,
   ImageSourcePropType,
   Linking,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import NavBar from "@/components/NavBar";
-import { Colors } from "@/constants/Colors";
 import { supabase } from "@/config/initSupabase";
+import { Colors } from "@/constants/Colors";
 import { useRouter } from "expo-router";
 
 interface ItemProps {
@@ -36,6 +36,8 @@ function Items({ ImageName, Name, router }: ItemProps) {
           router.replace("/Language");
         } else if (Name === "Terms of Service") {
           Linking.openURL("https://scarlet-technology.com");
+        } else if (Name === "Payments & Subscriptions") {
+          router.replace("/Payments");
         }
       }}
     >
@@ -158,6 +160,11 @@ export default function Store() {
         router={router}
         Name="Terms of Service"
         ImageName={require("../../assets/icons/terms.png")}
+      />
+      <Items
+        router={router}
+        Name="Payments & Subscriptions"
+        ImageName={require("../../assets/icons/payments.png")}
       />
       <Items
         router={router}
