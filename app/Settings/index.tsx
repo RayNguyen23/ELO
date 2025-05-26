@@ -16,9 +16,10 @@ import { useRouter } from "expo-router";
 interface ItemProps {
   ImageName: ImageSourcePropType;
   Name: string;
+  router: any;
 }
 
-function Items({ ImageName, Name }: ItemProps) {
+function Items({ ImageName, Name, router }: ItemProps) {
   async function signOut() {
     await supabase.auth.signOut();
   }
@@ -28,6 +29,8 @@ function Items({ ImageName, Name }: ItemProps) {
       onPress={() => {
         if (Name === "Logout") {
           signOut();
+        } else if (Name === "Saved") {
+          router.replace("/Saved");
         }
       }}
     >
@@ -136,16 +139,26 @@ export default function Store() {
         <Text style={{ fontSize: 14, fontWeight: "600" }}>Edit Profile</Text>
       </TouchableOpacity>
 
-      <Items Name="Saved" ImageName={require("../../assets/icons/save.png")} />
       <Items
+        router={router}
+        Name="Saved"
+        ImageName={require("../../assets/icons/save.png")}
+      />
+      <Items
+        router={router}
         Name="Language"
         ImageName={require("../../assets/icons/language.png")}
       />
       <Items
+        router={router}
         Name="Terms of Service"
         ImageName={require("../../assets/icons/terms.png")}
       />
-      <Items Name="Logout" ImageName={require("../../assets/icons/out.png")} />
+      <Items
+        router={router}
+        Name="Logout"
+        ImageName={require("../../assets/icons/out.png")}
+      />
 
       <NavBar />
     </View>
