@@ -82,6 +82,8 @@ export default function Auth() {
         uuid: data.user.id,
         display_name: displayName,
         transfer_code: generateRandomCode(),
+        current_use: 0,
+        left: 20,
       });
     }
 
