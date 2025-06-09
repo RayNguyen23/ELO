@@ -25,6 +25,8 @@ interface BottomProps {
   ImageUrl: string;
   setIsSaved: (e: boolean) => void;
   MoveToHome: () => void;
+  router: any;
+  amount: number;
 }
 
 function ActionButtons({
@@ -32,6 +34,8 @@ function ActionButtons({
   setIsSaved,
   MoveToHome,
   ImageUrl,
+  router,
+  amount,
 }: BottomProps) {
   const [animatedValue] = useState(new Animated.Value(0));
   const [isAnimating, setIsAnimating] = useState(false);
@@ -155,6 +159,15 @@ function ActionButtons({
 
         <TouchableOpacity
           style={[styles.primaryButton, { backgroundColor: "#26de81" }]}
+          onPress={() =>
+            router.replace({
+              pathname: "/Payments",
+              params: {
+                amount: `${amount.toLocaleString("vi-VN")}đ`,
+                to: "Store",
+              },
+            })
+          }
         >
           <Image
             alt="Buy"
@@ -305,10 +318,12 @@ export default function ViewItem() {
 
       {/* Action Buttons */}
       <ActionButtons
+        router={router}
         ImageUrl={imageUrl}
         IsSaved={IsSaved}
         setIsSaved={setIsSaved}
         MoveToHome={MoveToHome}
+        amount={120000}
       />
     </View>
   );

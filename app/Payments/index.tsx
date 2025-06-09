@@ -228,7 +228,7 @@ const TransferDetails: React.FC<TransferDetailsProps> = ({
 
 export default function Payments() {
   const router = useRouter();
-  const { amount } = useLocalSearchParams();
+  const { amount, to } = useLocalSearchParams();
   const Amount = Array.isArray(amount) ? amount[0] : amount;
   const [TransferCode, setTransferCode] = useState<string>("");
   const [selectedMethod, setSelectedMethod] = useState<
@@ -236,7 +236,13 @@ export default function Payments() {
   >("domestic");
 
   const handleBackPress = () => {
-    router.replace("/Subscriptions");
+    if (to === "Subscriptions") {
+      router.replace("/Subscriptions");
+    } else if (to === "Store") {
+      router.replace("/Store");
+    } else {
+      console.log("Unknown router");
+    }
   };
 
   const handleMethodSelect = (method: "domestic" | "international") => {

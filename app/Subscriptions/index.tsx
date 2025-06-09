@@ -200,7 +200,10 @@ export default function SubscriptionPlans() {
               onPress: () =>
                 router.replace({
                   pathname: "/Payments",
-                  params: { amount: `${plan.price.toLocaleString("vi-VN")}đ` },
+                  params: {
+                    amount: `${plan.price.toLocaleString("vi-VN")}đ`,
+                    to: "Subscriptions",
+                  },
                 }),
             },
           ]
