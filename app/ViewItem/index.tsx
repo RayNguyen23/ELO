@@ -5,8 +5,9 @@ import { REMOVE_BY_UUID_AND_URL } from "@/utils/removeDataFromSupabase";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   Image,
@@ -20,32 +21,45 @@ import {
 
 const { width, height } = Dimensions.get("window");
 
+// Interface for product data
+interface ItemProps {
+  id: string;
+  Item_name: string;
+  Categories: string;
+  To_vnd: string;
+  Descriptions: string;
+  Gender: string;
+  Product_Type: string;
+}
+
 interface BottomProps {
   IsSaved: boolean;
-  ImageUrl: string;
+  itemData: ItemProps | null;
   setIsSaved: (e: boolean) => void;
   MoveToHome: () => void;
   router: any;
-  amount: number;
 }
 
 function ActionButtons({
   IsSaved,
   setIsSaved,
   MoveToHome,
-  ImageUrl,
+  itemData,
   router,
-  amount,
 }: BottomProps) {
   const [animatedValue] = useState(new Animated.Value(0));
   const [isAnimating, setIsAnimating] = useState(false);
 
-  async function SaveImage(ImageUrl: string) {
+  if (!itemData) return null;
+
+  const imageUrl = `https://itqmqggapbmwnrwvkium.supabase.co/storage/v1/object/public/files/stores/${itemData.id}/1.png`;
+
+  async function SaveImage() {
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError || !authData.user) return;
 
     const uuid = authData.user.id;
-    PUSH("Elo_Saved", { uuid: uuid, ImageUrl: ImageUrl });
+    PUSH("Elo_Saved", { uuid: uuid, ImageUrl: imageUrl });
 
     // Animate heart
     animateSave();
@@ -56,10 +70,10 @@ function ActionButtons({
     if (authError || !authData.user) return;
 
     const uuid = authData.user.id;
-    await REMOVE_BY_UUID_AND_URL("Elo_Saved", uuid, ImageUrl);
+    await REMOVE_BY_UUID_AND_URL("Elo_Saved", uuid, imageUrl);
   }
 
-  async function checkIfSaved(imageUrl: string): Promise<boolean> {
+  async function checkIfSaved(): Promise<boolean> {
     const { data: authData, error: authError } = await supabase.auth.getUser();
     if (authError || !authData.user) return false;
 
@@ -106,78 +120,116 @@ function ActionButtons({
 
   useEffect(() => {
     async function checkSavedStatus() {
-      if (ImageUrl) {
-        const saved = await checkIfSaved(ImageUrl);
-        setIsSaved(saved);
-      }
+      const saved = await checkIfSaved();
+      setIsSaved(saved);
     }
 
     checkSavedStatus();
-  }, [ImageUrl]);
+  }, [itemData.id]);
+
+  // Format price from VND to display
+  const formatPrice = (vndPrice: string) => {
+    const price = parseInt(vndPrice);
+    return `${price.toLocaleString("vi-VN")}đ`;
+  };
+
+  // Convert VND to USD for display
+  const formatPriceUSD = (vndPrice: string) => {
+    const price = parseInt(vndPrice) / 24000;
+    return `$${price.toFixed(2)}`;
+  };
 
   return (
     <View style={styles.actionButtonsContainer}>
-      <View style={styles.actionButtonsRow}>
-        <TouchableOpacity
-          style={styles.circleButton}
-          onPress={() => {
-            if (IsSaved === false) {
-              setIsSaved(true);
-              SaveImage(ImageUrl);
-            } else {
-              setIsSaved(false);
-              RemoveImage();
-            }
-          }}
-        >
-          <Animated.View style={{ transform: [{ scale: heartScale }] }}>
-            <Image
-              alt="Save"
-              style={[styles.actionIcon, IsSaved && { tintColor: "#ff4757" }]}
-              resizeMode="contain"
-              source={
-                IsSaved
-                  ? require("../../assets/icons/saved.png")
-                  : require("../../assets/icons/save.png")
+      <BlurView intensity={80} style={styles.actionBlur}>
+        <View style={styles.actionButtonsRow}>
+          <TouchableOpacity
+            style={styles.circleButton}
+            onPress={() => {
+              if (IsSaved === false) {
+                setIsSaved(true);
+                SaveImage();
+              } else {
+                setIsSaved(false);
+                RemoveImage();
               }
+            }}
+          >
+            <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+              <Image
+                alt="Save"
+                style={[styles.actionIcon, IsSaved && { tintColor: "#ff4757" }]}
+                resizeMode="contain"
+                source={
+                  IsSaved
+                    ? require("../../assets/icons/saved.png")
+                    : require("../../assets/icons/save.png")
+                }
+              />
+            </Animated.View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: "#4b7bec" }]}
+            onPress={() => MoveToHome()}
+          >
+            <Image
+              alt="Use"
+              style={[styles.actionIcon, { tintColor: "#fff", marginRight: 8 }]}
+              resizeMode="contain"
+              source={require("../../assets/icons/use.png")}
             />
-          </Animated.View>
-        </TouchableOpacity>
+            <Text style={styles.primaryButtonText}>Use this Item</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: "#4b7bec" }]}
-          onPress={() => MoveToHome()}
-        >
-          <Image
-            alt="Use"
-            style={[styles.actionIcon, { tintColor: "#fff", marginRight: 8 }]}
-            resizeMode="contain"
-            source={require("../../assets/icons/use.png")}
-          />
-          <Text style={styles.primaryButtonText}>Use this Item</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.primaryButton, { backgroundColor: "#26de81" }]}
+            onPress={() =>
+              router.replace({
+                pathname: "/Payments",
+                params: {
+                  amount: formatPrice(itemData.To_vnd),
+                  itemId: itemData.id,
+                  itemName: itemData.Item_name,
+                  to: "Store",
+                },
+              })
+            }
+          >
+            <Image
+              alt="Buy"
+              style={[styles.actionIcon, { tintColor: "#fff", marginRight: 8 }]}
+              resizeMode="contain"
+              source={require("../../assets/icons/cart.png")}
+            />
+            <Text style={styles.primaryButtonText}>Buy Now</Text>
+          </TouchableOpacity>
+        </View>
+      </BlurView>
+    </View>
+  );
+}
 
-        <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: "#26de81" }]}
-          onPress={() =>
-            router.replace({
-              pathname: "/Payments",
-              params: {
-                amount: `${amount.toLocaleString("vi-VN")}đ`,
-                to: "Store",
-              },
-            })
-          }
-        >
-          <Image
-            alt="Buy"
-            style={[styles.actionIcon, { tintColor: "#fff", marginRight: 8 }]}
-            resizeMode="contain"
-            source={require("../../assets/icons/cart.png")}
-          />
-          <Text style={styles.primaryButtonText}>Buy Now</Text>
-        </TouchableOpacity>
-      </View>
+function LoadingState() {
+  return (
+    <View style={styles.loadingContainer}>
+      <ActivityIndicator size="large" color={Colors.White} />
+      <Text style={styles.loadingText}>Loading product details...</Text>
+    </View>
+  );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <View style={styles.errorContainer}>
+      <Text style={styles.errorTitle}>Product Not Found</Text>
+      <Text style={styles.errorText}>
+        Sorry, we couldn't find this product. It may have been removed or is
+        temporarily unavailable.
+      </Text>
+      <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+        <Text style={styles.retryButtonText}>Try Again</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -185,12 +237,53 @@ function ActionButtons({
 export default function ViewItem() {
   const [IsSaved, setIsSaved] = useState<boolean>(false);
   const [scrollY] = useState(new Animated.Value(0));
-  const { itemUrl, to } = useLocalSearchParams();
-  const imageUrl = Array.isArray(itemUrl) ? itemUrl[0] : itemUrl;
+  const [itemData, setItemData] = useState<ItemProps | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
 
+  const { itemId, to } = useLocalSearchParams();
   const router = useRouter();
 
+  // Fetch item data from database
+  const fetchItemData = useCallback(async () => {
+    if (!itemId) {
+      setError(true);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(false);
+
+      const { data, error: fetchError } = await supabase
+        .from("Elo_Store")
+        .select("*")
+        .eq("id", itemId)
+        .single();
+
+      if (fetchError || !data) {
+        console.error("Error fetching item:", fetchError);
+        setError(true);
+      } else {
+        setItemData(data);
+      }
+    } catch (err) {
+      console.error("Error in fetchItemData:", err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [itemId]);
+
+  useEffect(() => {
+    fetchItemData();
+  }, [fetchItemData]);
+
   function MoveToHome() {
+    if (!itemData) return;
+
+    const imageUrl = `https://itqmqggapbmwnrwvkium.supabase.co/storage/v1/object/public/files/stores/${itemData.id}/1.png`;
     router.replace({
       pathname: "/Home",
       params: { itemUrl: imageUrl },
@@ -202,6 +295,37 @@ export default function ViewItem() {
     outputRange: [0, 1],
     extrapolate: "clamp",
   });
+
+  // Format price functions
+  const formatPriceVND = (vndPrice: string) => {
+    const price = parseInt(vndPrice);
+    return `${price.toLocaleString("vi-VN")}đ`;
+  };
+
+  const formatPriceUSD = (vndPrice: string) => {
+    const price = parseInt(vndPrice) / 24000;
+    return `$${price.toFixed(2)}`;
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <LoadingState />
+      </View>
+    );
+  }
+
+  if (error || !itemData) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <ErrorState onRetry={fetchItemData} />
+      </View>
+    );
+  }
+
+  const imageUrl = `https://itqmqggapbmwnrwvkium.supabase.co/storage/v1/object/public/files/stores/${itemData.id}/1.png`;
 
   return (
     <View style={styles.container}>
@@ -222,7 +346,7 @@ export default function ViewItem() {
           if (destination) {
             router.replace(destination as any);
           } else {
-            console.warn("No destination provided.");
+            router.back();
           }
         }}
       >
@@ -265,65 +389,48 @@ export default function ViewItem() {
         {/* Product Details */}
         <View style={styles.productDetailsContainer}>
           <View style={styles.productHeader}>
-            <View>
-              <Text style={styles.productCategory}>Premium Collection</Text>
-              <Text style={styles.productTitle}>Exclusive Item</Text>
+            <View style={styles.productInfo}>
+              <View style={styles.categoryContainer}>
+                <Text style={styles.productCategory}>
+                  {itemData.Categories}
+                </Text>
+                <View style={styles.genderBadge}>
+                  <Text style={styles.genderBadgeText}>
+                    {itemData.Gender === "Female" ? "Nữ" : "Nam"}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.productTitle}>{itemData.Item_name}</Text>
+              <Text style={styles.productType}>{itemData.Product_Type}</Text>
             </View>
-            <View style={styles.priceBadge}>
-              <Text style={styles.priceText}>$149</Text>
+            <View style={styles.priceContainer}>
+              <Text style={styles.priceTextUSD}>{itemData.To_vnd}</Text>
+              <Text style={styles.priceTextVND}>
+                {formatPriceUSD(itemData.To_vnd)}
+              </Text>
             </View>
           </View>
 
           <View style={styles.detailsSection}>
             <Text style={styles.sectionTitle}>Description</Text>
             <Text style={styles.descriptionText}>
-              This premium item features high-quality materials and expert
-              craftsmanship. Perfect for enhancing your collection with its
-              unique design and exceptional quality.
+              {itemData.Descriptions ||
+                "This premium item features high-quality materials and expert craftsmanship. Perfect for enhancing your collection with its unique design and exceptional quality."}
             </Text>
           </View>
 
-          <View style={styles.detailsSection}>
-            <Text style={styles.sectionTitle}>Features</Text>
-            <View style={styles.featuresList}>
-              <View style={styles.featureItem}>
-                <View style={styles.featureDot} />
-                <Text style={styles.featureText}>
-                  Premium quality materials
-                </Text>
-              </View>
-              <View style={styles.featureItem}>
-                <View style={styles.featureDot} />
-                <Text style={styles.featureText}>
-                  Handcrafted with precision
-                </Text>
-              </View>
-              <View style={styles.featureItem}>
-                <View style={styles.featureDot} />
-                <Text style={styles.featureText}>Limited edition design</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <View style={styles.featureDot} />
-                <Text style={styles.featureText}>
-                  Exclusive to E L O members
-                </Text>
-              </View>
-            </View>
-          </View>
-
           {/* Spacer for bottom buttons */}
-          <View style={{ height: 100 }} />
+          <View style={{ height: 120 }} />
         </View>
       </ScrollView>
 
       {/* Action Buttons */}
       <ActionButtons
         router={router}
-        ImageUrl={imageUrl}
+        itemData={itemData}
         IsSaved={IsSaved}
         setIsSaved={setIsSaved}
         MoveToHome={MoveToHome}
-        amount={120000}
       />
     </View>
   );
@@ -426,35 +533,66 @@ const styles = StyleSheet.create({
   productHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 20,
+  },
+
+  productInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+
+  categoryContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
   },
 
   productCategory: {
     color: "rgba(255, 255, 255, 0.7)",
     fontSize: 14,
-    marginBottom: 4,
+    marginRight: 12,
+  },
+
+  genderBadge: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  genderBadgeText: {
+    color: Colors.White,
+    fontSize: 12,
+    fontWeight: "500",
   },
 
   productTitle: {
     color: Colors.White,
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "700",
+    marginBottom: 4,
   },
 
-  priceBadge: {
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
+  productType: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 14,
   },
 
-  priceText: {
+  priceContainer: {
+    alignItems: "flex-end",
+  },
+
+  priceTextUSD: {
     color: Colors.White,
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
+    marginBottom: 4,
+  },
+
+  priceTextVND: {
+    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: 14,
   },
 
   detailsSection: {
@@ -504,14 +642,19 @@ const styles = StyleSheet.create({
     right: 0,
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    backdropFilter: "blur(10px)",
+  },
+
+  actionBlur: {
+    borderRadius: 25,
+    overflow: "hidden",
   },
 
   actionButtonsRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
 
   circleButton: {
@@ -543,7 +686,62 @@ const styles = StyleSheet.create({
 
   primaryButtonText: {
     color: Colors.White,
-    fontSize: 14,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+
+  // Loading State
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.Background,
+  },
+
+  loadingText: {
+    color: Colors.White,
+    fontSize: 16,
+    marginTop: 16,
+    fontWeight: "400",
+  },
+
+  // Error State
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.Background,
+    paddingHorizontal: 40,
+  },
+
+  errorTitle: {
+    color: Colors.White,
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+
+  errorText: {
+    color: "rgba(255, 255, 255, 0.7)",
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+
+  retryButton: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+
+  retryButtonText: {
+    color: Colors.White,
+    fontSize: 16,
     fontWeight: "600",
   },
 });

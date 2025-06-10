@@ -1,12 +1,20 @@
 import { supabase } from "@/config/initSupabase";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Animated,
   Dimensions,
+  FlatList,
   Image,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,6 +29,17 @@ import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
 
+// Define interfaces
+interface ItemProps {
+  id: string;
+  Item_name: string;
+  Categories: string;
+  To_vnd: string;
+  Descriptions: string;
+  Gender: string;
+  Product_Type: string;
+}
+
 // Define gender categories
 const GENDER_CATEGORIES = ["Women", "Men"];
 
@@ -32,16 +51,15 @@ const CLOTHING_CATEGORIES = {
 
 interface TopNavProps {
   router: any;
+  cartCount?: number;
 }
 
-function TopNav({ router }: TopNavProps) {
+function TopNav({ router, cartCount = 0 }: TopNavProps) {
   return (
     <View style={styles.topNav}>
       <TouchableOpacity
         style={styles.topNavBtn}
-        onPress={() => {
-          router.replace("/Saved");
-        }}
+        onPress={() => router.replace("/Saved")}
       >
         <View style={styles.iconContainer}>
           <Image
@@ -60,15 +78,20 @@ function TopNav({ router }: TopNavProps) {
 
       <TouchableOpacity
         style={styles.topNavBtn}
-        onPress={() => router.replace("/Saved")}
+        onPress={() => router.replace("/Cart")}
       >
         <View style={styles.iconContainer}>
           <Image
             alt="Cart"
             style={styles.navIcon}
             resizeMode="contain"
-            source={require("../../assets/icons/save.png")}
+            source={require("../../assets/icons/cart.png")}
           />
+          {cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
+            </View>
+          )}
         </View>
       </TouchableOpacity>
     </View>
@@ -78,9 +101,11 @@ function TopNav({ router }: TopNavProps) {
 function SearchBar({
   searchQuery,
   setSearchQuery,
+  onClear,
 }: {
   searchQuery: string;
   setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  onClear: () => void;
 }) {
   return (
     <View style={styles.searchBarContainer}>
@@ -95,9 +120,14 @@ function SearchBar({
           placeholder="Search products..."
           placeholderTextColor="rgba(255, 255, 255, 0.6)"
           value={searchQuery}
-          onChangeText={(text) => setSearchQuery(text)}
+          onChangeText={setSearchQuery}
           style={styles.searchInput}
         />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={onClear} style={styles.clearButton}>
+            <Text style={styles.clearButtonText}>×</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -176,13 +206,109 @@ function CategoryTabs({
   );
 }
 
+function ProductCard({
+  item,
+  index,
+  onPress,
+}: {
+  item: ItemProps;
+  index: number;
+  onPress: () => void;
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        delay: index * 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        delay: index * 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  // Generate image URL
+  const imageUrl = `https://itqmqggapbmwnrwvkium.supabase.co/storage/v1/object/public/files/stores/${item.id}/1.png`;
+
+  return (
+    <Animated.View
+      style={[
+        styles.cardContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={0.9}
+      >
+        <View style={styles.cardImageContainer}>
+          <Image
+            source={{ uri: imageUrl }}
+            style={styles.cardImage}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={["transparent", "rgba(0,0,0,0.4)"]}
+            style={styles.cardGradient}
+          />
+
+          {/* Category Badge */}
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>{item.Categories}</Text>
+          </View>
+
+          {/* Quick Actions */}
+          <View style={styles.quickActions}>
+            <TouchableOpacity style={styles.quickActionBtn}>
+              <Image
+                alt="Favorite"
+                style={styles.quickActionIcon}
+                source={require("../../assets/icons/save.png")}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.cardContent}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {item.Item_name}
+          </Text>
+          <Text style={styles.cardDescription} numberOfLines={1}>
+            {item.Descriptions}
+          </Text>
+          <View style={styles.cardFooter}>
+            <Text style={styles.cardPrice}>{item.To_vnd}</Text>
+            <View style={styles.genderTag}>
+              <Text style={styles.genderTagText}>
+                {item.Gender === "female" ? "W" : "M"}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
 function FeaturedCollection({
   title,
   items,
   router,
 }: {
   title: string;
-  items: string[];
+  items: ItemProps[];
   router: any;
 }) {
   if (items.length === 0) return null;
@@ -201,39 +327,41 @@ function FeaturedCollection({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.featuredItemsContainer}
       >
-        {items.slice(0, 5).map((item, index) => (
-          <TouchableOpacity
-            key={`featured-${index}`}
-            style={styles.featuredItem}
-            onPress={() =>
-              router.replace({
-                pathname: "/ViewItem",
-                params: { itemUrl: item, to: "/Store" },
-              })
-            }
-          >
-            <View style={styles.featuredImageContainer}>
-              <Image
-                source={{ uri: item }}
-                style={styles.featuredImage}
-                resizeMode="cover"
-              />
-              <LinearGradient
-                colors={["transparent", "rgba(0,0,0,0.4)"]}
-                style={styles.featuredGradient}
-              />
-              <View style={styles.featuredBadge}>
-                <Text style={styles.featuredBadgeText}>NEW</Text>
+        {items.slice(0, 5).map((item, index) => {
+          const imageUrl = `https://itqmqggapbmwnrwvkium.supabase.co/storage/v1/object/public/files/stores/${item.id}/1.png`;
+
+          return (
+            <TouchableOpacity
+              key={`featured-${item.id}`}
+              style={styles.featuredItem}
+              onPress={() =>
+                router.replace({
+                  pathname: "/ViewItem",
+                  params: { itemId: item.id, to: "/Store" },
+                })
+              }
+            >
+              <View style={styles.featuredImageContainer}>
+                <Image
+                  source={{ uri: imageUrl }}
+                  style={styles.featuredImage}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={["transparent", "rgba(0,0,0,0.4)"]}
+                  style={styles.featuredGradient}
+                />
+                <View style={styles.featuredBadge}>
+                  <Text style={styles.featuredBadgeText}>NEW</Text>
+                </View>
               </View>
-            </View>
-            <Text style={styles.featuredItemName}>
-              {index % 2 === 0 ? "Premium Item" : "Exclusive Design"}
-            </Text>
-            <Text style={styles.featuredItemPrice}>
-              ${Math.floor(Math.random() * 50) + 50}.99
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={styles.featuredItemName} numberOfLines={2}>
+                {item.Item_name}
+              </Text>
+              <Text style={styles.featuredItemPrice}>{item.To_vnd}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -242,9 +370,12 @@ function FeaturedCollection({
 function EmptyState() {
   return (
     <View style={styles.emptyState}>
+      <View style={styles.emptyIconContainer}>
+        <Text style={styles.emptyIcon}>🛍️</Text>
+      </View>
       <Text style={styles.emptyStateTitle}>No items found</Text>
       <Text style={styles.emptyStateText}>
-        Try adjusting your search or check back later
+        Try adjusting your search or browse different categories
       </Text>
     </View>
   );
@@ -261,9 +392,9 @@ function LoadingState() {
 
 export default function Store() {
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [allData, setAllData] = useState<string[]>([]);
-  const [filteredData, setFilteredData] = useState<string[]>([]);
+  const [allData, setAllData] = useState<ItemProps[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [selectedGender, setSelectedGender] = useState<string>("Women");
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
 
@@ -277,106 +408,106 @@ export default function Store() {
 
   const router = useRouter();
 
-  // Mock data for men's and women's clothing
-  const [womenClothing, setWomenClothing] = useState<string[]>([]);
-  const [menClothing, setMenClothing] = useState<string[]>([]);
-
-  async function GetItems() {
+  // Optimized data fetching
+  const GetItems = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.storage
-        .from("files")
-        .list("stores/", {
-          limit: 100,
-          offset: 0,
-          sortBy: { column: "name", order: "asc" },
-        });
+
+      const { data, error } = await supabase
+        .from("Elo_Store")
+        .select("*")
+        .order("Item_name", { ascending: true });
 
       if (error) {
-        console.error("Error listing files:", error);
+        console.error("Error fetching items from Elo_Store:", error);
       } else {
-        const publicUrls = data.map((file) => {
-          const { data: publicUrlData } = supabase.storage
-            .from("files")
-            .getPublicUrl(`stores/${file.name}`);
-          return publicUrlData.publicUrl;
-        });
-
-        setAllData(publicUrls);
-
-        // Split data into men's and women's clothing (mock split based on index)
-        const women = publicUrls.filter((_, i) => i % 2 === 0);
-        const men = publicUrls.filter((_, i) => i % 2 !== 0);
-
-        setWomenClothing(women);
-        setMenClothing(men);
+        setAllData(data || []);
       }
     } catch (error) {
-      console.error("Error fetching items:", error);
+      console.error("Error in GetItems():", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }
+  }, []);
 
-  useEffect(() => {
+  // Optimized filtering with useMemo
+  const filteredData = useMemo(() => {
+    let filtered = allData;
+
+    // Filter by gender
+    if (selectedGender === "Women") {
+      filtered = filtered.filter(
+        (item) => item.Gender.toLowerCase() === "female"
+      );
+    } else {
+      filtered = filtered.filter(
+        (item) => item.Gender.toLowerCase() === "male"
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory !== "All") {
+      filtered = filtered.filter(
+        (item) =>
+          item.Categories.toLowerCase().includes(
+            selectedCategory.toLowerCase()
+          ) ||
+          item.Product_Type.toLowerCase().includes(
+            selectedCategory.toLowerCase()
+          )
+      );
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(
+        (item) =>
+          item.Item_name.toLowerCase().includes(query) ||
+          item.Descriptions.toLowerCase().includes(query) ||
+          item.Categories.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  }, [allData, selectedGender, selectedCategory, searchQuery]);
+
+  // Separate data for featured section
+  const featuredItems = useMemo(() => {
+    return filteredData.slice(0, 5);
+  }, [filteredData]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
     GetItems();
+  }, [GetItems]);
+
+  const clearSearch = useCallback(() => {
+    setSearchQuery("");
   }, []);
 
   useEffect(() => {
-    // Filter based on gender, category, and search query
-    const genderData = selectedGender === "Women" ? womenClothing : menClothing;
+    GetItems();
+  }, [GetItems]);
 
-    // In a real app, you would filter by category here
-    // For now, we'll just use the search query
-    const filtered = genderData.filter((url) =>
-      url.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    setFilteredData(filtered);
-  }, [
-    searchQuery,
-    selectedGender,
-    selectedCategory,
-    womenClothing,
-    menClothing,
-  ]);
-
-  const renderItem = ({ item, index }: { item: string; index: number }) => (
-    <TouchableOpacity
-      style={[styles.card, { marginLeft: index % 2 === 0 ? 0 : 8 }]}
-      onPress={() =>
-        router.replace({
-          pathname: "/ViewItem",
-          params: { itemUrl: item, to: "/Store" },
-        })
-      }
-      activeOpacity={0.8}
-    >
-      <View style={styles.cardImageContainer}>
-        <Image
-          source={{ uri: item }}
-          style={styles.cardImage}
-          resizeMode="cover"
-        />
-        <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.3)"]}
-          style={styles.cardGradient}
-        />
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>
-          {index % 3 === 0
-            ? "Premium Design"
-            : index % 3 === 1
-            ? "Classic Style"
-            : "Limited Edition"}
-        </Text>
-        <Text style={styles.cardPrice}>
-          ${Math.floor(Math.random() * 50) + 30}.99
-        </Text>
-      </View>
-    </TouchableOpacity>
+  const renderItem = useCallback(
+    ({ item, index }: { item: ItemProps; index: number }) => (
+      <ProductCard
+        item={item}
+        index={index}
+        onPress={() =>
+          router.replace({
+            pathname: "/ViewItem",
+            params: { itemId: item.id, to: "/Store" },
+          })
+        }
+      />
+    ),
+    [router]
   );
+
+  const keyExtractor = useCallback((item: ItemProps) => item.id, []);
 
   return (
     <LinearGradient
@@ -390,7 +521,7 @@ export default function Store() {
         <BlurView intensity={80} style={styles.blurHeader} />
       </Animated.View>
 
-      <TopNav router={router} />
+      <TopNav router={router} cartCount={0} />
 
       <Animated.ScrollView
         style={styles.scrollView}
@@ -401,8 +532,20 @@ export default function Store() {
           { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.White}
+            colors={[Colors.White]}
+          />
+        }
       >
-        <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+        <SearchBar
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+          onClear={clearSearch}
+        />
 
         <GenderTabs
           selectedGender={selectedGender}
@@ -424,7 +567,7 @@ export default function Store() {
             {/* Featured Collection */}
             <FeaturedCollection
               title={`Featured ${selectedGender}'s Collection`}
-              items={filteredData.slice(0, 5)}
+              items={featuredItems}
               router={router}
             />
 
@@ -436,46 +579,17 @@ export default function Store() {
               </Text>
             </View>
 
-            {/* Grid View */}
-            <View style={styles.gridContainer}>
-              {filteredData.map((item, index) => (
-                <TouchableOpacity
-                  key={`grid-${index}`}
-                  style={[styles.card, { marginLeft: index % 2 === 0 ? 0 : 8 }]}
-                  onPress={() =>
-                    router.replace({
-                      pathname: "/ViewItem",
-                      params: { itemUrl: item, to: "/Store" },
-                    })
-                  }
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.cardImageContainer}>
-                    <Image
-                      source={{ uri: item }}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                    <LinearGradient
-                      colors={["transparent", "rgba(0,0,0,0.3)"]}
-                      style={styles.cardGradient}
-                    />
-                  </View>
-                  <View style={styles.cardContent}>
-                    <Text style={styles.cardTitle}>
-                      {index % 3 === 0
-                        ? "Premium Design"
-                        : index % 3 === 1
-                        ? "Classic Style"
-                        : "Limited Edition"}
-                    </Text>
-                    <Text style={styles.cardPrice}>
-                      ${Math.floor(Math.random() * 50) + 30}.99
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {/* Grid View with FlatList for better performance */}
+            <FlatList
+              data={filteredData}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+              numColumns={2}
+              columnWrapperStyle={styles.columnWrapper}
+              contentContainerStyle={styles.gridContainer}
+              scrollEnabled={false}
+              showsVerticalScrollIndicator={false}
+            />
 
             {/* Spacer for bottom nav */}
             <View style={{ height: 80 }} />
@@ -542,13 +656,31 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
-    backdropFilter: "blur(10px)",
+    position: "relative",
   },
 
   navIcon: {
     width: 20,
     height: 20,
     tintColor: Colors.White,
+  },
+
+  cartBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#ff6b6b",
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  cartBadgeText: {
+    color: Colors.White,
+    fontSize: 12,
+    fontWeight: "600",
   },
 
   logoContainer: {
@@ -580,7 +712,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    backdropFilter: "blur(10px)",
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
@@ -597,6 +728,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.White,
     fontWeight: "400",
+  },
+
+  clearButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  clearButtonText: {
+    color: Colors.White,
+    fontSize: 18,
+    fontWeight: "300",
   },
 
   // Gender Tabs
@@ -763,15 +909,21 @@ const styles = StyleSheet.create({
     fontWeight: "400",
   },
 
+  // Product Cards
   gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    paddingBottom: 20,
+  },
+
+  columnWrapper: {
     justifyContent: "space-between",
+    marginBottom: 16,
+  },
+
+  cardContainer: {
+    width: (width - 40) / 2,
   },
 
   card: {
-    width: (width - 40) / 2,
-    marginBottom: 16,
     backgroundColor: "rgba(255, 255, 255, 0.05)",
     borderRadius: 16,
     overflow: "hidden",
@@ -797,6 +949,43 @@ const styles = StyleSheet.create({
     height: 60,
   },
 
+  categoryBadge: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+
+  categoryBadgeText: {
+    color: Colors.White,
+    fontSize: 10,
+    fontWeight: "500",
+  },
+
+  quickActions: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+  },
+
+  quickActionBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  quickActionIcon: {
+    width: 16,
+    height: 16,
+    tintColor: Colors.White,
+  },
+
   cardContent: {
     padding: 12,
   },
@@ -804,22 +993,62 @@ const styles = StyleSheet.create({
   cardTitle: {
     color: Colors.White,
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: "600",
     marginBottom: 4,
   },
 
+  cardDescription: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 12,
+    marginBottom: 8,
+  },
+
+  cardFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
   cardPrice: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: 14,
+    color: Colors.White,
+    fontSize: 16,
+    fontWeight: "700",
+  },
+
+  genderTag: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+
+  genderTagText: {
+    color: Colors.White,
+    fontSize: 10,
     fontWeight: "600",
   },
 
+  // Empty State
   emptyState: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 40,
     minHeight: 300,
+  },
+
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  emptyIcon: {
+    fontSize: 32,
   },
 
   emptyStateTitle: {
