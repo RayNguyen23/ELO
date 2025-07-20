@@ -1,6 +1,6 @@
 import { Colors } from "@/constants/Colors";
 import { PUSH } from "@/utils/pushDataToSupabase";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import Spinner from "react-native-loading-spinner-overlay";
+import Purchases from "react-native-purchases";
 import { supabase } from "../config/initSupabase";
 
 const { width, height } = Dimensions.get("window");
@@ -25,6 +26,15 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+
+  useEffect(() => {
+    Purchases.configure({
+      apiKey:
+        Platform.select({
+          ios: "appl_GtjHktvlDwzgfxiEzeUaRQnXBsC",
+        }) || "", // fallback to empty string or handle error
+    });
+  }, []);
 
   const generateRandomCode = (): string => {
     return Math.floor(10000000 + Math.random() * 90000000).toString();

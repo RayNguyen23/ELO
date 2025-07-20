@@ -2366,6 +2366,11 @@
   dependencies:
     nanoid "^3.3.11"
 
+"@revenuecat/purchases-typescript-internal@14.2.0":
+  version "14.2.0"
+  resolved "https://registry.npmjs.org/@revenuecat/purchases-typescript-internal/-/purchases-typescript-internal-14.2.0.tgz"
+  integrity sha512-C/9RB2fZk/19HxCO+iFIMBR6WG5TtioUtHlsB7evYwLlHetMFmz79VNcRN1yXmHs1pcLcoRd/tnw9P0neG/54Q==
+
 "@rtsao/scc@^1.1.0":
   version "1.1.0"
   resolved "https://registry.npmjs.org/@rtsao/scc/-/scc-1.1.0.tgz"
@@ -4757,6 +4762,11 @@ expo-image@~2.1.7:
   resolved "https://registry.npmjs.org/expo-image/-/expo-image-2.1.7.tgz"
   integrity sha512-p2Gr8fP/YakFHHo4rbpJbRWwKNrZp1GzSD91WEG3ZYAbTVdTjheJ6gUxXgggFaxEbaY+4WeQ0c5j9tZq8+3cEg==
 
+expo-in-app-purchases@^14.5.0:
+  version "14.5.0"
+  resolved "https://registry.npmjs.org/expo-in-app-purchases/-/expo-in-app-purchases-14.5.0.tgz"
+  integrity sha512-rsVPH6fOoU+mzjn80IFLz5f4gxEHLxXv+Pl4Dwblc5IDYvKTaUvTljNuaVmWESZSjDOMBT1JUAYRAlMRfBWOcg==
+
 expo-json-utils@~0.15.0:
   version "0.15.0"
   resolved "https://registry.npmjs.org/expo-json-utils/-/expo-json-utils-0.15.0.tgz"
@@ -4805,6 +4815,13 @@ expo-modules-autolinking@2.1.10:
     glob "^10.4.2"
     require-from-string "^2.0.2"
     resolve-from "^5.0.0"
+
+expo-modules-core@^2.5.0:
+  version "2.5.0"
+  resolved "https://registry.npmjs.org/expo-modules-core/-/expo-modules-core-2.5.0.tgz"
+  integrity sha512-aIbQxZE2vdCKsolQUl6Q9Farlf8tjh/ROR4hfN1qT7QBGPl1XrJGnaOKkcgYaGrlzCPg/7IBe0Np67GzKMZKKQ==
+  dependencies:
+    invariant "^2.2.4"
 
 expo-modules-core@2.3.13:
   version "2.3.13"
@@ -4883,7 +4900,7 @@ expo-web-browser@~14.1.6:
   resolved "https://registry.npmjs.org/expo-web-browser/-/expo-web-browser-14.1.6.tgz"
   integrity sha512-/4P8eWqRyfXIMZna3acg320LXNA+P2cwyEVbjDX8vHnWU+UnOtyRKWy3XaAIyMPQ9hVjBNUQTh4MPvtnPRzakw==
 
-expo@*, expo@~53.0.9:
+expo@*, expo@>=47.0.0, expo@~53.0.9:
   version "53.0.9"
   resolved "https://registry.npmjs.org/expo/-/expo-53.0.9.tgz"
   integrity sha512-UFG68aVOpccg3s++S3pbtI3YCQCnlu/TFvhnQ5vaD3vhOox1Uk/f2O2T95jmwA/EvKvetqGj34lys3DNXvPqgQ==
@@ -7371,6 +7388,11 @@ react-native-gesture-handler@~2.24.0:
     hoist-non-react-statics "^3.3.0"
     invariant "^2.2.4"
 
+react-native-iap@^13.0.0:
+  version "13.0.0"
+  resolved "https://registry.npmjs.org/react-native-iap/-/react-native-iap-13.0.0.tgz"
+  integrity sha512-Lpm+bYpNPeMnCvkIoK42I9qe+fmulGHvhr/qDJdKVuyz0kaZSuSnlMiTsxV0HMd0cYAi71Mq8mcmMs8+uVwOPQ==
+
 react-native-is-edge-to-edge@^1.1.6, react-native-is-edge-to-edge@1.1.7:
   version "1.1.7"
   resolved "https://registry.npmjs.org/react-native-is-edge-to-edge/-/react-native-is-edge-to-edge-1.1.7.tgz"
@@ -7380,6 +7402,21 @@ react-native-loading-spinner-overlay@^3.0.1:
   version "3.0.1"
   resolved "https://registry.npmjs.org/react-native-loading-spinner-overlay/-/react-native-loading-spinner-overlay-3.0.1.tgz"
   integrity sha512-4GdR54HQnKg2HPSSisVizfTLuyhSh4splY9eb8mKiYF1Ihjn/5EmdNo5bN3S7uKPFRC3WLzIZIouX6G6fXfnjw==
+
+react-native-purchases-ui@^8.11.10:
+  version "8.11.10"
+  resolved "https://registry.npmjs.org/react-native-purchases-ui/-/react-native-purchases-ui-8.11.10.tgz"
+  integrity sha512-L5cgjaBhE7rqospva9QURMsEHlUsU0tnqtR48WsC2AXgqJJQcVZUldMnuG0ZUjfw126NIuSQrGepKEGk5htf4Q==
+  dependencies:
+    "@revenuecat/purchases-typescript-internal" "14.2.0"
+    react-native-purchases "8.11.10"
+
+react-native-purchases@^8.11.10, react-native-purchases@8.11.10:
+  version "8.11.10"
+  resolved "https://registry.npmjs.org/react-native-purchases/-/react-native-purchases-8.11.10.tgz"
+  integrity sha512-ceIYLqH+jr3pRcQ7VxGwyTwpa+Qg1ERk47Bx1lJ8lCBdDjI4HLE+6//3X5I5e+2tpTo3iEy84y/+SyOB/tOLmg==
+  dependencies:
+    "@revenuecat/purchases-typescript-internal" "14.2.0"
 
 react-native-reanimated@*, react-native-reanimated@~3.17.4:
   version "3.17.5"
@@ -7481,7 +7518,7 @@ react-native-webview@*, react-native-webview@13.13.5:
     escape-string-regexp "^4.0.0"
     invariant "2.2.4"
 
-react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", "react-native@>= 0.58.0", "react-native@>= 0.60.0", react-native@>=0.46, react-native@0.79.2:
+react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", "react-native@>= 0.58.0", "react-native@>= 0.60.0", react-native@>=0.46, react-native@>=0.65.1, react-native@0.79.2:
   version "0.79.2"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.79.2.tgz"
   integrity sha512-AnGzb56JvU5YCL7cAwg10+ewDquzvmgrMddiBM0GAWLwQM/6DJfGd2ZKrMuKKehHerpDDZgG+EY64gk3x3dEkw==
@@ -7533,7 +7570,7 @@ react-timer-mixin@^0.13.4:
   resolved "https://registry.npmjs.org/react-timer-mixin/-/react-timer-mixin-0.13.4.tgz"
   integrity sha512-4+ow23tp/Tv7hBM5Az5/Be/eKKF7DIvJ09voz5LyHGQaqqz9WV8YMs31eFvcYQs7d451LSg7kDJV70XYN/Ug/Q==
 
-react@*, react@^16.12.0, "react@^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^18.0.0 || ^19.0.0", react@^19.0.0, "react@>= 18.2.0", react@>=16.5.1, react@>=16.8, react@>=17.0.0, react@19.0.0:
+react@*, react@^16.12.0, "react@^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^18.0.0 || ^19.0.0", react@^19.0.0, "react@>= 16.6.3", "react@>= 18.2.0", react@>=16.13.1, react@>=16.5.1, react@>=16.8, react@>=17.0.0, react@19.0.0:
   version "19.0.0"
   resolved "https://registry.npmjs.org/react/-/react-19.0.0.tgz"
   integrity sha512-V8AVnmPIICiWpGfm6GLzCR/W5FXLchHop40W4nXBmdlEceh16rCN8O8LNWm5bh5XUX91fh7KpA+W0TgMKmgTpQ==
