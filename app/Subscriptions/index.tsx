@@ -1,7 +1,7 @@
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -11,13 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import {
-  getSubscriptions,
-  initConnection,
-  ProductPurchase,
-  purchaseUpdatedListener,
-  requestSubscription,
-} from "react-native-iap";
 
 const { width } = Dimensions.get("window");
 
@@ -180,103 +173,45 @@ export default function SubscriptionPlans() {
     router.replace("/Settings");
   };
 
-  // const handlePlanSelect = (planId: string) => {
-  //   setSelectedPlan(planId);
-
-  //   const plan = plansData.find((p) => p.id === planId);
-  //   if (plan) {
-  //     if (plan.price === 0) {
-  //       Alert.alert(
-  //         "Free Plan",
-  //         "You can start using the free plan immediately!",
-  //         [
-  //           { text: "Cancel", style: "cancel" },
-  //           { text: "Start Now", onPress: () => router.push("/Home") },
-  //         ]
-  //       );
-  //     } else {
-  //       Alert.alert(
-  //         "Upgrade Plan",
-  //         `Upgrade to ${plan.name} plan for ${plan.price.toLocaleString(
-  //           "vi-VN"
-  //         )}đ?`,
-  //         [
-  //           { text: "Cancel", style: "cancel" },
-  //           {
-  //             text: "Continue",
-  //             onPress: () =>
-  //               router.replace({
-  //                 pathname: "/Payments",
-  //                 params: {
-  //                   amount: `${plan.price.toLocaleString("vi-VN")}đ`,
-  //                   to: "Subscriptions",
-  //                 },
-  //               }),
-  //           },
-  //         ]
-  //       );
-  //     }
-  //   }
-  // };
-  const handlePlanSelect = async (planId: string) => {
+  const handlePlanSelect = (planId: string) => {
     setSelectedPlan(planId);
+
     const plan = plansData.find((p) => p.id === planId);
-    if (!plan) return;
-
-    if (plan.price === 0) {
-      Alert.alert(
-        "Free Plan",
-        "You can start using the free plan immediately!",
-        [
-          { text: "Cancel", style: "cancel" },
-          { text: "Start Now", onPress: () => router.push("/Home") },
-        ]
-      );
-      return;
-    }
-
-    try {
-      const products = await getSubscriptions({ skus: [planId + "_monthly"] }); // match your App Store Connect productId
-      if (!products || products.length === 0) {
-        Alert.alert("Error", "Product not found.");
-        return;
-      }
-
-      const purchase = await requestSubscription({ sku: planId + "_monthly" });
-      console.log("purchase result:", purchase);
-
-      Alert.alert("Success", `You’ve purchased the ${plan.name} plan!`);
-      router.replace("/Home");
-    } catch (e: any) {
-      if (!e.userCancelled) {
-        Alert.alert("Purchase Failed", e.message || "Unknown error");
+    if (plan) {
+      if (plan.price === 0) {
+        Alert.alert(
+          "Free Plan",
+          "You can start using the free plan immediately!",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Start Now", onPress: () => router.push("/Home") },
+          ]
+        );
+      } else {
+        Alert.alert(
+          "Upgrade Plan",
+          `Upgrade to ${plan.name} plan for ${plan.price.toLocaleString(
+            "vi-VN"
+          )}đ?`,
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Continue",
+              onPress: () =>
+                router.replace({
+                  pathname: "/Payments",
+                  params: {
+                    amount: `${plan.price.toLocaleString("vi-VN")}đ`,
+                    to: "Subscriptions",
+                  },
+                }),
+            },
+          ]
+        );
       }
     }
   };
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        await initConnection();
-        console.log("IAP connection ready");
-      } catch (error) {
-        console.log("IAP init failed", error);
-      }
-    };
-
-    const purchaseListener = purchaseUpdatedListener(
-      (purchase: ProductPurchase) => {
-        console.log("Purchase Updated:", purchase);
-        // You can validate receipt or grant access here
-      }
-    );
-
-    init();
-
-    return () => {
-      purchaseListener.remove();
-    };
-  }, []);
 
   const plansData: PlanData[] = [
     {
