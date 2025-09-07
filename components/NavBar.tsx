@@ -24,28 +24,43 @@ export default function NavBar({
 }: NavBarProps) {
   const router = useRouter();
 
-  const pickImage = async () => {
-    const { data: authData, error: authError } = await supabase.auth.getUser();
-    if (authError || !authData.user) return;
+  // ✅ Centralized function to check user login
+  const fetchUser = async () => {
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) {
+      return null;
+    }
+    return data.user;
+  };
 
-    const uuid = authData.user.id;
+  const pickImage = async () => {
+    const user = await fetchUser();
+
+    // ✅ Redirect to "/" if not logged in
+    if (!user) {
+      Alert.alert("Login Required", "Please log in to upload an image.");
+      router.replace("/");
+      return;
+    }
+
+    // ✅ Check usage limit
     const { data, error } = await supabase
       .from("Elo_Users")
       .select("current_use, left")
-      .eq("uuid", uuid)
+      .eq("uuid", user.id)
       .single();
+
     if (error) {
       console.log(error);
-    } else {
-      if (Number(data.current_use) === Number(data.left)) {
-        Alert.alert(
-          "Out of turns",
-          "You’ve used all your turns. Please purchase more to continue."
-        );
-        router.replace("/Subscriptions");
-        return;
-      }
+    } else if (Number(data.current_use) === Number(data.left)) {
+      Alert.alert(
+        "Out of turns",
+        "You’ve used all your turns. Please purchase more to continue."
+      );
+      router.replace("/Subscriptions");
+      return;
     }
+
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -57,15 +72,13 @@ export default function NavBar({
       if (!result.canceled && result.assets.length > 0) {
         const uri = result.assets[0].uri;
 
-        // ✅ Convert file URI to base64 string
+        // ✅ Convert to base64
         const base64 = await FileSystem.readAsStringAsync(uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
-
-        // ✅ Add the data URI prefix for proper recognition
         const base64WithPrefix = `data:image/jpeg;base64,${base64}`;
 
-        // ✅ Upload the base64 image and get the public URL
+        // ✅ Upload
         const uploadedUrl = await uploadBase64Image(base64WithPrefix);
 
         if (uploadedUrl) {

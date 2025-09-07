@@ -19,7 +19,7 @@ const InitialLayout = () => {
       router.replace("/Home");
     } else if (!session) {
       // Redirect unauthenticated users to the login page
-      router.replace("/");
+      router.replace("/Home");
     }
   }, [session, initialized]);
 
