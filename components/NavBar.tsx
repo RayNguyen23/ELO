@@ -100,7 +100,10 @@ export default function NavBar({
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={styles.navBtn}
-            onPress={() => router.replace("/Store")}
+            onPress={() => {
+              // router.replace("/Store");
+              alert("This feature is coming soon!");
+            }}
           >
             <Image
               style={styles.navImage}
